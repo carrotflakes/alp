@@ -7,8 +7,16 @@ use async_graphql::Schema;
 use async_graphql_actix_web::{Request, Response, WSSubscription};
 use schema::{MutationRoot, MySchema, QueryRoot, Storage, SubscriptionRoot};
 
-async fn index(schema: web::Data<MySchema>, req: Request) -> Response {
-    schema.execute(req.into_inner()).await.into()
+async fn index(schema: web::Data<MySchema>, req: HttpRequest, gql_req: Request) -> Response {
+    let token = req
+        .headers()
+        .get("Authentication")
+        .and_then(|value| value.to_str().map(|s| schema::MyToken(s.to_string())).ok());
+    let mut request = gql_req.into_inner();
+    if let Some(token) = token {
+        request = request.data(token);
+    }
+    schema.execute(request).await.into()
 }
 
 async fn index_playground() -> Result<HttpResponse> {
@@ -24,7 +32,19 @@ async fn index_ws(
     req: HttpRequest,
     payload: web::Payload,
 ) -> Result<HttpResponse> {
-    WSSubscription::start(Schema::clone(&*schema), &req, payload)
+    WSSubscription::start_with_initializer(Schema::clone(&*schema), &req, payload, |value| async {
+        #[derive(serde_derive::Deserialize)]
+        struct Payload {
+            #[serde(rename = "Authentication")]
+            authentication: String,
+        }
+
+        let mut data = async_graphql::Data::default();
+        if let Ok(payload) = serde_json::from_value::<Payload>(value) {
+            data.insert(schema::MyToken(payload.authentication));
+        }
+        Ok(data)
+    })
 }
 
 #[actix_rt::main]

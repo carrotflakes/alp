@@ -5,6 +5,8 @@ use slab::Slab;
 use std::sync::Arc;
 use std::time::Duration;
 
+pub struct MyToken(pub String);
+
 pub type MySchema = Schema<QueryRoot, MutationRoot, SubscriptionRoot>;
 
 #[derive(Clone)]
@@ -38,6 +40,10 @@ impl QueryRoot {
     async fn messages(&self, ctx: &Context<'_>) -> Vec<Message> {
         let messages = &ctx.data_unchecked::<Storage>().lock().await.messages;
         messages.iter().map(|(_, book)| book).cloned().collect()
+    }
+
+    async fn session(&self, ctx: &Context<'_>) -> Option<String> {
+        ctx.data_opt::<MyToken>().map(|token| token.0.to_string())
     }
 }
 
@@ -114,15 +120,20 @@ impl SubscriptionRoot {
 
     async fn messages(
         &self,
+        ctx: &Context<'_>,
         mutation_type: Option<MutationType>,
-    ) -> impl Stream<Item = MessageChanged> {
-        SimpleBroker::<MessageChanged>::subscribe().filter(move |event| {
+    ) -> async_graphql::Result<impl Stream<Item = MessageChanged>> {
+        if let None = ctx.data_opt::<MyToken>() {
+            return Err(async_graphql::Error::new("token is required!"));
+        }
+
+        Ok(SimpleBroker::<MessageChanged>::subscribe().filter(move |event| {
             let res = if let Some(mutation_type) = mutation_type {
                 event.mutation_type == mutation_type
             } else {
                 true
             };
             async move { res }
-        })
+        }))
     }
 }

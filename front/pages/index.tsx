@@ -60,7 +60,7 @@ export default function Home() {
         <div>query error: {JSON.stringify(error)}</div>
         <div>subscription loading: {sub.loading}</div>
         <div>subscription error: {JSON.stringify(sub.error)}</div>
-        <div>subscribed: {JSON.stringify(sub.data?.messages.message.text)}</div>
+        <div>subscription: {JSON.stringify(sub.data?.messages.message.text)}</div>
         <div>
           {messages.map((e: any, i: number) => (<div key={i}>{JSON.stringify(e.text)}</div>))}
         </div>
