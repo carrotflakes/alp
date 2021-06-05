@@ -1,3 +1,4 @@
+use crate::auth::{Authorize, UID};
 use crate::simple_broker::SimpleBroker;
 use async_graphql::{Context, Enum, Object, Result, Schema, Subscription, ID};
 use futures::{lock::Mutex, Stream, StreamExt};
@@ -12,6 +13,7 @@ pub type MySchema = Schema<QueryRoot, MutationRoot, SubscriptionRoot>;
 #[derive(Clone)]
 pub struct Message {
     id: ID,
+    uid: String,
     text: String,
 }
 
@@ -19,6 +21,10 @@ pub struct Message {
 impl Message {
     async fn id(&self) -> &str {
         &self.id
+    }
+
+    async fn uid(&self) -> &str {
+        &self.uid
     }
 
     async fn text(&self) -> &str {
@@ -51,12 +57,14 @@ pub struct MutationRoot;
 
 #[Object]
 impl MutationRoot {
-    async fn post_message(&self, ctx: &Context<'_>, text: String) -> ID {
+    async fn post_message(&self, ctx: &Context<'_>, text: String) -> async_graphql::Result<ID> {
+        let uid = varify_token(ctx)?;
         let messages = &mut ctx.data_unchecked::<Storage>().lock().await.messages;
         let entry = messages.vacant_entry();
         let id: ID = entry.key().into();
         let message = Message {
             id: id.clone(),
+            uid: uid.0.to_string(),
             text,
         };
         entry.insert(message);
@@ -64,7 +72,7 @@ impl MutationRoot {
             mutation_type: MutationType::Created,
             id: id.clone(),
         });
-        id
+        Ok(id)
     }
 }
 
@@ -123,17 +131,43 @@ impl SubscriptionRoot {
         ctx: &Context<'_>,
         mutation_type: Option<MutationType>,
     ) -> async_graphql::Result<impl Stream<Item = MessageChanged>> {
-        if let None = ctx.data_opt::<MyToken>() {
-            return Err(async_graphql::Error::new("token is required!"));
-        }
+        let uid = varify_token(ctx)?;
+        println!("uid: {}", uid.0);
 
-        Ok(SimpleBroker::<MessageChanged>::subscribe().filter(move |event| {
-            let res = if let Some(mutation_type) = mutation_type {
-                event.mutation_type == mutation_type
-            } else {
-                true
-            };
-            async move { res }
-        }))
+        Ok(
+            SimpleBroker::<MessageChanged>::subscribe().filter(move |event| {
+                let res = if let Some(mutation_type) = mutation_type {
+                    event.mutation_type == mutation_type
+                } else {
+                    true
+                };
+                async move { res }
+            }),
+        )
     }
+}
+
+fn varify_token(ctx: &Context<'_>) -> Result<UID, async_graphql::Error> {
+    let uid = if let Some(token) = ctx.data_opt::<MyToken>() {
+        if token.0.starts_with("Bearer ") {
+            match ctx
+                .data_unchecked::<Authorize>()
+                .varify(token.0.trim_start_matches("Bearer "))
+            {
+                Ok(Some(uid)) => uid,
+                Ok(None) => return Err(async_graphql::Error::new(format!("token has not uid"))),
+                Err(err) => {
+                    return Err(async_graphql::Error::new(format!(
+                        "token varify failed: {}",
+                        err
+                    )))
+                }
+            }
+        } else {
+            return Err(async_graphql::Error::new("token is invalid"));
+        }
+    } else {
+        return Err(async_graphql::Error::new("token is required"));
+    };
+    Ok(uid)
 }

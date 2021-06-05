@@ -1,5 +1,7 @@
+mod auth;
 mod schema;
 mod simple_broker;
+
 use actix_cors::Cors;
 use actix_web::{guard, http, web, App, HttpRequest, HttpResponse, HttpServer, Result};
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
@@ -7,10 +9,12 @@ use async_graphql::Schema;
 use async_graphql_actix_web::{Request, Response, WSSubscription};
 use schema::{MutationRoot, MySchema, QueryRoot, Storage, SubscriptionRoot};
 
+use crate::auth::Authorize;
+
 async fn index(schema: web::Data<MySchema>, req: HttpRequest, gql_req: Request) -> Response {
     let token = req
         .headers()
-        .get("Authentication")
+        .get("Authorization")
         .and_then(|value| value.to_str().map(|s| schema::MyToken(s.to_string())).ok());
     let mut request = gql_req.into_inner();
     if let Some(token) = token {
@@ -35,7 +39,7 @@ async fn index_ws(
     WSSubscription::start_with_initializer(Schema::clone(&*schema), &req, payload, |value| async {
         #[derive(serde_derive::Deserialize)]
         struct Payload {
-            #[serde(rename = "Authentication")]
+            #[serde(rename = "Authorization")]
             authentication: String,
         }
 
@@ -49,8 +53,10 @@ async fn index_ws(
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
+    let auth = Authorize::new().await;
     let schema = Schema::build(QueryRoot, MutationRoot, SubscriptionRoot)
         .data(Storage::default())
+        .data(auth)
         .finish();
 
     println!("Playground: http://localhost:8000");

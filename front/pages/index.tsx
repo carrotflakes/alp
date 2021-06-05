@@ -1,13 +1,17 @@
 import { useQuery, useMutation, gql, useSubscription } from '@apollo/client'
 import Head from 'next/head'
-import { useCallback, useState } from 'react'
+import { useCallback, useContext, useEffect, useState } from 'react'
+import { AuthContext } from '../context/auth'
 import styles from '../styles/Home.module.css'
 
 export default function Home() {
+  const { currentUser } = useContext(AuthContext)
+
   const { loading, error, data } = useQuery(gql`
   query {
     messages {
       id
+      uid
       text
     }
   }
@@ -30,6 +34,7 @@ export default function Home() {
   subscription {
     messages(mutationType: CREATED) {
       message {
+        uid
         text
       }
     }
@@ -56,13 +61,14 @@ export default function Home() {
       </Head>
 
       <main className={styles.main}>
+        {currentUser ? `signed in as ${currentUser?.displayName}` : <div>please <a href="/signin">sign in</a></div> }
         <div>query loading: {loading}</div>
         <div>query error: {JSON.stringify(error)}</div>
         <div>subscription loading: {sub.loading}</div>
         <div>subscription error: {JSON.stringify(sub.error)}</div>
         <div>subscription: {JSON.stringify(sub.data?.messages.message.text)}</div>
         <div>
-          {messages.map((e: any, i: number) => (<div key={i}>{JSON.stringify(e.text)}</div>))}
+          {messages.map((e: any, i: number) => (<div key={i}>{e.uid + ": " + JSON.stringify(e.text)}</div>))}
         </div>
         
         <input type="text" value={inputText} onChange={e => setInputText(e.target.value)}></input>
