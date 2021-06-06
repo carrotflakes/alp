@@ -1,4 +1,5 @@
 mod auth;
+mod paging;
 mod schema;
 mod simple_broker;
 

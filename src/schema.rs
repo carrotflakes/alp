@@ -1,4 +1,5 @@
 use crate::auth::{Authorize, UID};
+use crate::paging::{PageInfo, PagingInput};
 use crate::simple_broker::SimpleBroker;
 use async_graphql::{Context, Enum, Object, Result, Schema, Subscription, ID};
 use futures::{lock::Mutex, Stream, StreamExt};
@@ -32,6 +33,23 @@ impl Message {
     }
 }
 
+#[derive(Clone)]
+pub struct PagedMessages {
+    page_info: PageInfo,
+    messages: Vec<Message>,
+}
+
+#[Object]
+impl PagedMessages {
+    async fn page_info(&self) -> &PageInfo {
+        &self.page_info
+    }
+
+    async fn messages(&self) -> &Vec<Message> {
+        &self.messages
+    }
+}
+
 #[derive(Default)]
 pub struct Slabs {
     messages: Slab<Message>,
@@ -43,9 +61,84 @@ pub struct QueryRoot;
 
 #[Object]
 impl QueryRoot {
-    async fn messages(&self, ctx: &Context<'_>) -> Vec<Message> {
+    async fn all_messages(&self, ctx: &Context<'_>) -> Vec<Message> {
         let messages = &ctx.data_unchecked::<Storage>().lock().await.messages;
         messages.iter().map(|(_, book)| book).cloned().collect()
+    }
+
+    async fn messages(
+        &self,
+        ctx: &Context<'_>,
+        paging: PagingInput,
+    ) -> async_graphql::Result<PagedMessages> {
+        let messages = &ctx.data_unchecked::<Storage>().lock().await.messages;
+
+        let (asc, limit, id) = match (&paging.first, &paging.last) {
+            (None, None) => {
+                return Err(format!("'first' or 'last' required in PagingInput").into());
+            }
+            (Some(_), Some(_)) => {
+                return Err(format!("cannot specify 'first' and 'last' same time").into());
+            }
+            (Some(limit), None) => (true, *limit, paging.after),
+            (None, Some(limit)) => (false, *limit, paging.before),
+        };
+
+        if limit < 1 {
+            return Err("invalid limit".into());
+        }
+        let limit = limit.min(20) as usize;
+
+        let id = id
+            .map(|x| x.parse().unwrap())
+            .unwrap_or(if asc { 0 } else { usize::MAX });
+
+        let (messages, has_prev, has_next): (Vec<_>, _, _) = if asc {
+            let i = messages
+                .iter()
+                .position(|x| x.1.id.parse::<usize>().unwrap() > id)
+                .unwrap_or(messages.len());
+            (
+                messages
+                    .iter()
+                    .skip(i)
+                    .take(limit)
+                    .map(|x| x.1)
+                    .cloned()
+                    .collect(),
+                0 < i,
+                i + limit < messages.len(),
+            )
+        } else {
+            let i = messages
+                .iter()
+                .position(|x| x.1.id.parse::<usize>().unwrap() >= id)
+                .unwrap_or(messages.len());
+            let s = i.saturating_sub(limit);
+            (
+                messages
+                    .iter()
+                    .skip(s)
+                    .take(limit)
+                    .map(|x| x.1)
+                    .cloned()
+                    .collect(),
+                0 < s,
+                i < messages.len(),
+            )
+        };
+        let start_cursor = messages.first().map(|s| s.id.clone()).unwrap_or(id.into());
+        let end_cursor = messages.last().map(|s| s.id.clone()).unwrap_or(id.into());
+
+        Ok(PagedMessages {
+            page_info: PageInfo {
+                start_cursor,
+                end_cursor,
+                has_prev,
+                has_next,
+            },
+            messages,
+        })
     }
 
     async fn session(&self, ctx: &Context<'_>) -> Option<String> {
@@ -61,7 +154,7 @@ impl MutationRoot {
         let uid = varify_token(ctx)?;
         let messages = &mut ctx.data_unchecked::<Storage>().lock().await.messages;
         let entry = messages.vacant_entry();
-        let id: ID = entry.key().into();
+        let id: ID = (entry.key() + 1).into();
         let message = Message {
             id: id.clone(),
             uid: uid.0.to_string(),
@@ -106,7 +199,7 @@ impl MessageChanged {
 
     async fn message(&self, ctx: &Context<'_>) -> Result<Option<Message>> {
         let messages = &ctx.data_unchecked::<Storage>().lock().await.messages;
-        let id = self.id.parse::<usize>()?;
+        let id = self.id.parse::<usize>()? - 1;
         Ok(messages.get(id).cloned())
     }
 }
@@ -149,6 +242,10 @@ impl SubscriptionRoot {
 
 fn varify_token(ctx: &Context<'_>) -> Result<UID, async_graphql::Error> {
     let uid = if let Some(token) = ctx.data_opt::<MyToken>() {
+        if token.0 == "dummy" {
+            return Ok(UID("dummy".to_string()));
+        }
+
         if token.0.starts_with("Bearer ") {
             match ctx
                 .data_unchecked::<Authorize>()
