@@ -22,7 +22,7 @@ Then open localhost:3000 in your browser.
 
 ## Copyright
 
-Copyright (c) 2020 carrotflakes (carrotflakes@gmail.com)
+Copyright (c) 2021 carrotflakes (carrotflakes@gmail.com)
 
 ## License
 
