@@ -9,7 +9,7 @@ export default function Home() {
 
   const { loading, error, data } = useQuery(gql`
   query {
-    messages {
+    allMessages {
       id
       uid
       text
