@@ -1,5 +1,6 @@
 import { useQuery, useMutation, gql, useSubscription } from '@apollo/client'
 import Head from 'next/head'
+import Link from 'next/link'
 import { useCallback, useContext, useEffect, useState } from 'react'
 import { AuthContext } from '../context/auth'
 import styles from '../styles/Home.module.css'
@@ -61,7 +62,7 @@ export default function Home() {
       </Head>
 
       <main className={styles.main}>
-        {currentUser ? `signed in as ${currentUser?.displayName}` : <div>please <a href="/signin">sign in</a></div> }
+        {currentUser ? `signed in as ${currentUser?.displayName}` : <div>please <Link href="/signin">sign in</Link></div> }
         <div>query loading: {loading}</div>
         <div>query error: {JSON.stringify(error)}</div>
         <div>subscription loading: {sub.loading}</div>
