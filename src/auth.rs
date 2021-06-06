@@ -69,12 +69,12 @@ pub struct JWK {
     pub n: String,
 }
 
-#[derive(Debug, Deserialize)]
-struct KeysResponse {
-    keys: Vec<JWK>,
-}
-
 pub async fn get_firebase_jwks() -> Result<HashMap<String, JWK>, SendRequestError> {
+    #[derive(Debug, Deserialize)]
+    struct KeysResponse {
+        keys: Vec<JWK>,
+    }
+
     let url =
         "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com";
 
