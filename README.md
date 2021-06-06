@@ -14,7 +14,7 @@ relies:
 $ docker-compose up
 ```
 
-Then open localhost:8000 in your browser.
+Then open localhost:3000 in your browser.
 
 ## Author
 
