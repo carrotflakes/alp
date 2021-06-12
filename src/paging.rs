@@ -9,7 +9,7 @@ pub struct PagingInput {
 }
 
 #[derive(Clone, SimpleObject)]
-pub struct PageInfo {
+pub struct MyPageInfo {
     pub start_cursor: ID,
     pub end_cursor: ID,
     pub has_prev: bool,

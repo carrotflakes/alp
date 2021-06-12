@@ -6,9 +6,28 @@ query allMessages {
   }
 }
 
+query messages($last: Int!, $startCursor: String) {
+  messages(last: $last, before: $startCursor) {
+    pageInfo {
+      startCursor
+      endCursor
+      hasPreviousPage
+      hasNextPage
+    }
+    edges {
+      node {
+        id
+        uid
+        text
+      }
+    }
+  }
+}
+
 subscription messageAdded {
   messages(mutationType: CREATED) {
     message {
+      id
       uid
       text
     }

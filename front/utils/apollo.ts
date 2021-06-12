@@ -1,6 +1,6 @@
-import { ApolloClient, InMemoryCache, split, HttpLink } from '@apollo/client'
+import { ApolloClient, InMemoryCache, split, HttpLink, TypePolicies } from '@apollo/client'
 import { WebSocketLink } from '@apollo/client/link/ws'
-import { getMainDefinition } from '@apollo/client/utilities'
+import { getMainDefinition, relayStylePagination } from '@apollo/client/utilities'
 import { setContext } from '@apollo/client/link/context'
 
 function createLink(idToken: string | undefined) {
@@ -34,7 +34,7 @@ function createLink(idToken: string | undefined) {
   )
 }
 
-export const createClient = (idToken?: string) => {console.log("createClient", idToken)
+export const createClient = (idToken?: string) => {
   const authLink = setContext((_, { headers }) => {
     return {
       headers: {
@@ -44,8 +44,16 @@ export const createClient = (idToken?: string) => {console.log("createClient", i
     }
   })
 
+  const typePolicies: TypePolicies = {
+    Query: {
+      fields: {
+        messages: relayStylePagination(),
+      }
+    }
+  }
+
   return new ApolloClient({
     link: authLink.concat(createLink(idToken)),
-    cache: new InMemoryCache()
+    cache: new InMemoryCache({ typePolicies })
   })
 }

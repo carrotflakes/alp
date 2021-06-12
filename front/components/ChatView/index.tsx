@@ -1,12 +1,11 @@
-import 'tailwindcss/tailwind.css'
+import { FC, useCallback, useState } from "react";
+import 'tailwindcss/tailwind.css';
+import { useMessageAddedSubscription, useMessagesQuery } from "../../generated/graphql";
 
-import { createRef, FC, RefObject, useCallback, useEffect, useState } from "react";
-import { useAllMessagesQuery, useMessageAddedSubscription } from "../../generated/graphql";
+type props = { width: number, height: number }
 
-type props = { width: number, height: number, fetchOlder?: () => void }
-
-export const ChatView: FC<props> = ({ width, height, fetchOlder }) => {
-  const { loading, error, data } = useAllMessagesQuery();
+export const ChatView: FC<props> = ({ width, height }) => {
+  const { loading, error, data, fetchMore } = useMessagesQuery({ variables: { last: 10 } });
 
   const [addedMessages, setAddedMessages] = useState([] as any[])
 
@@ -19,13 +18,27 @@ export const ChatView: FC<props> = ({ width, height, fetchOlder }) => {
     onSubscriptionData,
   })
 
-  const messages = [...(data?.allMessages || []), ...addedMessages]
+  const fetchOlder = useCallback(() => {
+    let startCursor = data?.messages.pageInfo.startCursor
+    if (startCursor === '') { // Work around for async-graphql
+      startCursor = null
+    }
+    fetchMore({
+      variables: {
+        last: 10,
+        startCursor,
+      },
+    })
+  }, [data, fetchMore])
 
+  const messages = [...(data?.messages.edges?.filter(x => x).map(x => x?.node) || []), ...addedMessages]
+  // console.log(messages)
   return (
     <div
       className="bg-blue-300 p-2 overflow-y-auto"
-      style={{ width: width + 'px', height: height + 'px' }}>
-      {messages.map((e: any, i: number) => <Message key={i} user={e.uid} text={e.text} scrollTo={i === messages.length - 1} />)}
+      style={{ width: width + 'px', height: height + 'px' }}
+      onScroll={e => { if (e.currentTarget.scrollTop == 0) fetchOlder() }}>
+      {messages.map((e: any, i: number) => <Message key={e.id} user={e.uid} text={e.text} scrollTo={i === messages.length - 1} />)}
     </div>
   )
 }
