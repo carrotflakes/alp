@@ -52,11 +52,11 @@ export default function Home() {
         <div>subscription loading: {sub.loading}</div>
         <div>subscription error: {JSON.stringify(sub.error)}</div>
         <div>subscription: {JSON.stringify(sub.data?.messages.message?.text)}</div>
-        <div>
+        <div className="bg-blue-300 border-black border-2">
           {messages.map((e: any, i: number) => (<div key={i}>{e.uid + ": " + JSON.stringify(e.text)}</div>))}
         </div>
         
-        <input type="text" value={inputText} onChange={e => setInputText(e.target.value)}></input>
+        <input className="border-black border-2" type="text" value={inputText} onChange={e => setInputText(e.target.value)}></input>
         <button onClick={post}>send</button>
       </main>
     </div>
