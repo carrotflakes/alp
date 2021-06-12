@@ -16,6 +16,7 @@ function createLink(idToken: string | undefined) {
     uri: 'ws://localhost:8000/',
     options: {
       reconnect: true,
+      lazy: true,
       connectionParams: { Authorization: `Bearer ${idToken}` }
     }
   })
