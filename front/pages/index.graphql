@@ -1,0 +1,16 @@
+query allMessages {
+  allMessages {
+    id
+    uid
+    text
+  }
+}
+
+subscription messageAdded {
+  messages(mutationType: CREATED) {
+    message {
+      uid
+      text
+    }
+  }
+}

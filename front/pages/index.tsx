@@ -4,19 +4,12 @@ import Link from 'next/link'
 import { useCallback, useContext, useEffect, useState } from 'react'
 import { AuthContext } from '../context/auth'
 import styles from '../styles/Home.module.css'
+import { useAllMessagesQuery, useMessageAddedSubscription } from "../generated/graphql";
 
 export default function Home() {
   const { currentUser } = useContext(AuthContext)
 
-  const { loading, error, data } = useQuery(gql`
-  query {
-    allMessages {
-      id
-      uid
-      text
-    }
-  }
-  `)
+  const { loading, error, data } = useAllMessagesQuery();
 
   const [postMessage, {data: posted}] = useMutation(gql`
   mutation($text: String) {
@@ -31,16 +24,7 @@ export default function Home() {
     setAddedMessages([...addedMessages, message])
   }, [addedMessages])
 
-  const sub = useSubscription(gql`
-  subscription {
-    messages(mutationType: CREATED) {
-      message {
-        uid
-        text
-      }
-    }
-  }
-  `, {
+  const sub = useMessageAddedSubscription({
     onSubscriptionData,
   })
 
@@ -51,7 +35,7 @@ export default function Home() {
     setInputText("")
   }, [inputText, postMessage])
 
-  const messages = [...(data?.messages || []), ...addedMessages]
+  const messages = [...(data?.allMessages || []), ...addedMessages]
 
   return (
     <div className={styles.container}>
@@ -67,7 +51,7 @@ export default function Home() {
         <div>query error: {JSON.stringify(error)}</div>
         <div>subscription loading: {sub.loading}</div>
         <div>subscription error: {JSON.stringify(sub.error)}</div>
-        <div>subscription: {JSON.stringify(sub.data?.messages.message.text)}</div>
+        <div>subscription: {JSON.stringify(sub.data?.messages.message?.text)}</div>
         <div>
           {messages.map((e: any, i: number) => (<div key={i}>{e.uid + ": " + JSON.stringify(e.text)}</div>))}
         </div>
