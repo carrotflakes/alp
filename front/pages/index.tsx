@@ -1,10 +1,12 @@
-import { useQuery, useMutation, gql, useSubscription } from '@apollo/client'
+import { gql, useLazyQuery, useMutation } from '@apollo/client'
+import firebase from 'firebase'
 import Head from 'next/head'
 import Link from 'next/link'
-import { useCallback, useContext, useEffect, useState } from 'react'
+import { useCallback, useContext, useState } from 'react'
+import { ChatView } from '../components/ChatView'
 import { AuthContext } from '../context/auth'
+import { useAllMessagesQuery, useMessageAddedSubscription } from "../generated/graphql"
 import styles from '../styles/Home.module.css'
-import { useAllMessagesQuery, useMessageAddedSubscription } from "../generated/graphql";
 
 export default function Home() {
   const { currentUser } = useContext(AuthContext)
@@ -46,18 +48,31 @@ export default function Home() {
       </Head>
 
       <main className={styles.main}>
-        {currentUser ? `signed in as ${currentUser?.displayName}` : <div>please <Link href="/signin">sign in</Link></div> }
+        {
+          currentUser ?
+          <div>signed in as {currentUser?.displayName}<div onClick={() => firebase.auth().signOut()}>sign out</div></div> :
+          <div>please <Link href="/signin">sign in</Link></div>
+        }
         <div>query loading: {loading}</div>
         <div>query error: {JSON.stringify(error)}</div>
         <div>subscription loading: {sub.loading}</div>
         <div>subscription error: {JSON.stringify(sub.error)}</div>
         <div>subscription: {JSON.stringify(sub.data?.messages.message?.text)}</div>
-        <div className="bg-blue-300 border-black border-2">
+        {/* <div className="bg-blue-300 border-black border-2">
           {messages.map((e: any, i: number) => (<div key={i}>{e.uid + ": " + JSON.stringify(e.text)}</div>))}
+        </div> */}
+
+        <ChatView width={400} height={400}></ChatView>
+        <div className="w-[400px]">
+          <input
+            className="border-black border-2"
+            type="text"
+            value={inputText}
+            onChange={e => setInputText(e.target.value)}
+            onKeyDown={e => {e.shiftKey && e.key === "Enter" && post()}}
+          ></input>
+          <button onClick={post}>send</button>
         </div>
-        
-        <input className="border-black border-2" type="text" value={inputText} onChange={e => setInputText(e.target.value)}></input>
-        <button onClick={post}>send</button>
       </main>
     </div>
   )
