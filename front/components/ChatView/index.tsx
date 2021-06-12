@@ -1,11 +1,11 @@
-import { FC, useCallback, useState } from "react";
+import { FC, useCallback, useRef, useState } from "react";
 import 'tailwindcss/tailwind.css';
 import { useMessageAddedSubscription, useMessagesQuery } from "../../generated/graphql";
 
 type props = { width: number, height: number }
 
 export const ChatView: FC<props> = ({ width, height }) => {
-  const { loading, error, data, fetchMore } = useMessagesQuery({ variables: { last: 10 } });
+  const messagesResult = useMessagesQuery({ variables: { last: 10 } });
 
   const [addedMessages, setAddedMessages] = useState([] as any[])
 
@@ -14,36 +14,53 @@ export const ChatView: FC<props> = ({ width, height }) => {
     setAddedMessages([...addedMessages, message])
   }, [addedMessages])
 
-  const sub = useMessageAddedSubscription({
+  useMessageAddedSubscription({
     onSubscriptionData,
   })
 
   const fetchOlder = useCallback(() => {
-    let startCursor = data?.messages.pageInfo.startCursor
+    if (!messagesResult || messagesResult.loading || messagesResult.error || !messagesResult.fetchMore) {
+      return;
+    }
+
+    let startCursor = messagesResult.data?.messages.pageInfo.startCursor
     if (startCursor === '') { // Work around for async-graphql
       startCursor = null
     }
-    fetchMore({
+
+    messagesResult.fetchMore({
       variables: {
         last: 10,
         startCursor,
       },
     })
-  }, [data, fetchMore])
+  }, [messagesResult])
 
-  const messages = [...(data?.messages.edges?.filter(x => x).map(x => x?.node) || []), ...addedMessages]
-  // console.log(messages)
+  const messages = [...(messagesResult.data?.messages.edges?.filter(x => x).map(x => x?.node) || []), ...addedMessages]
+
+  const containerRef = useRef<HTMLDivElement | null>(null)
+
+  const [topMessageEl, setTopMessageEl] = useState<HTMLElement | null>(null)
+  const topMessageRef = useCallback((el: HTMLElement) => {
+    if (containerRef.current && topMessageEl && topMessageEl !== el) {
+      const offset = topMessageEl.offsetTop - (topMessageEl.parentElement?.offsetTop || 0)
+      containerRef.current.scrollTop += offset
+    }
+    setTopMessageEl(el)
+  }, [topMessageEl])
+
   return (
     <div
       className="bg-blue-300 p-2 overflow-y-auto"
       style={{ width: width + 'px', height: height + 'px' }}
-      onScroll={e => { if (e.currentTarget.scrollTop == 0) fetchOlder() }}>
-      {messages.map((e: any, i: number) => <Message key={e.id} user={e.uid} text={e.text} scrollTo={i === messages.length - 1} />)}
+      onScroll={e => { if (e.currentTarget.scrollTop == 0) fetchOlder() }}
+      ref={containerRef}>
+      {messages.map((e: any, i: number) => <Message key={e.id} user={e.uid} text={e.text} scrollTo={i === messages.length - 1} ref_={i === 0 ? topMessageRef : undefined} />)}
     </div>
   )
 }
 
-const Message: FC<{ user: string, text: string, scrollTo: boolean }> = ({ user, text, scrollTo }) => {
+const Message: FC<{ user: string, text: string, scrollTo: boolean, ref_?: (el: HTMLElement) => void }> = ({ user, text, scrollTo, ref_ }) => {
   const a = useCallback((e: HTMLDivElement) => {
     scrollTo && e?.scrollIntoView({
       behavior: 'smooth',
@@ -51,7 +68,7 @@ const Message: FC<{ user: string, text: string, scrollTo: boolean }> = ({ user, 
     })
   }, [scrollTo])
   return (
-    <div ref={a}>
+    <div ref={x => { x && (a(x), ref_ && ref_(x)) }}>
       <div className="opacity-60">{user}</div>
       <div className="text-xl">{text}</div>
     </div>
