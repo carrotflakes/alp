@@ -13,7 +13,10 @@ export const ChatView: FC<props> = ({ width, height }) => {
   const topMessageRef = useCallback((el: HTMLElement) => {
     if (containerRef.current && topMessageEl && topMessageEl !== el) {
       const offset = topMessageEl.offsetTop - (topMessageEl.parentElement?.offsetTop || 0)
-      containerRef.current.scrollTop += offset
+      const containerEl = containerRef.current
+      setTimeout(() => {
+        containerEl.scrollTop += offset
+      }, 10)
     }
     setTopMessageEl(el)
   }, [topMessageEl])
