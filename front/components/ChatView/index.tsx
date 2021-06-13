@@ -1,42 +1,11 @@
 import { FC, useCallback, useRef, useState } from "react";
 import 'tailwindcss/tailwind.css';
-import { useMessageAddedSubscription, useMessagesQuery } from "../../generated/graphql";
+import { useMessages } from "./messages";
 
 type props = { width: number, height: number }
 
 export const ChatView: FC<props> = ({ width, height }) => {
-  const messagesResult = useMessagesQuery({ variables: { last: 10 } });
-
-  const [addedMessages, setAddedMessages] = useState([] as any[])
-
-  const onSubscriptionData = useCallback((x) => {
-    const message = x.subscriptionData.data.messages.message
-    setAddedMessages([...addedMessages, message])
-  }, [addedMessages])
-
-  useMessageAddedSubscription({
-    onSubscriptionData,
-  })
-
-  const fetchOlder = useCallback(() => {
-    if (!messagesResult || messagesResult.loading || messagesResult.error || !messagesResult.fetchMore) {
-      return;
-    }
-
-    let startCursor = messagesResult.data?.messages.pageInfo.startCursor
-    if (startCursor === '') { // Work around for async-graphql
-      startCursor = null
-    }
-
-    messagesResult.fetchMore({
-      variables: {
-        last: 10,
-        startCursor,
-      },
-    })
-  }, [messagesResult])
-
-  const messages = [...(messagesResult.data?.messages.edges?.filter(x => x).map(x => x?.node) || []), ...addedMessages]
+  const mes = useMessages()
 
   const containerRef = useRef<HTMLDivElement | null>(null)
 
@@ -53,9 +22,26 @@ export const ChatView: FC<props> = ({ width, height }) => {
     <div
       className="bg-blue-300 p-2 overflow-y-auto"
       style={{ width: width + 'px', height: height + 'px' }}
-      onScroll={e => { if (e.currentTarget.scrollTop == 0) fetchOlder() }}
+      onScroll={e => { if (e.currentTarget.scrollTop == 0) mes.fetchOlder() }}
       ref={containerRef}>
-      {messages.map((e: any, i: number) => <Message key={e.id} user={e.uid} text={e.text} scrollTo={i === messages.length - 1} ref_={i === 0 ? topMessageRef : undefined} />)}
+      {
+        mes.loading ?
+          <div>...</div> :
+          mes.error ?
+            <div>
+              error: {mes.error.toString()}
+            </div> : null
+      }
+      {
+        mes.messages.map((e: any, i: number) =>
+          <Message
+            key={e.id}
+            user={e.uid}
+            text={e.text}
+            scrollTo={i === mes.messages.length - 1}
+            ref_={i === 0 ? topMessageRef : undefined}
+          />)
+      }
     </div>
   )
 }
