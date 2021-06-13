@@ -1,10 +1,18 @@
 version: "3.9"
 services:
   server:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
     ports:
       - 8000:8000
+    volumes:
+      - .:/usr/src/myapp
   front:
-    build: ./front
+    build:
+      context: ./front
+      dockerfile: Dockerfile.dev
     ports:
       - 3000:3000
+    volumes:
+      - ./front:/opt/app

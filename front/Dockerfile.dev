@@ -1,0 +1,11 @@
+FROM node:lts-slim AS deps
+
+WORKDIR /opt/app
+COPY package.json package-lock.json ./
+
+RUN npm i
+
+COPY . .
+
+ENV NODE_ENV=development
+CMD ["node_modules/.bin/next", "dev"]
