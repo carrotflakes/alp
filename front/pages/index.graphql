@@ -44,4 +44,5 @@ fragment MyMessage on Message {
   user {
     name
   }
+  createdAt
 }

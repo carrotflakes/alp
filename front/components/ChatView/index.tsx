@@ -40,8 +40,7 @@ export const ChatView: FC<props> = ({ width, height }) => {
         mes.messages.map((e: MyMessageFragment, i: number) =>
           <Message
             key={e.id}
-            user={e.user.name}
-            text={e.text}
+            message={e}
             scrollTo={i === mes.messages.length - 1}
             ref_={i === 0 ? topMessageRef : undefined}
           />)
@@ -50,7 +49,7 @@ export const ChatView: FC<props> = ({ width, height }) => {
   )
 }
 
-const Message: FC<{ user: string, text: string, scrollTo: boolean, ref_?: (el: HTMLElement) => void }> = ({ user, text, scrollTo, ref_ }) => {
+const Message: FC<{ message: MyMessageFragment, scrollTo: boolean, ref_?: (el: HTMLElement) => void }> = ({ message, scrollTo, ref_ }) => {
   const a = useCallback((e: HTMLDivElement) => {
     scrollTo && e?.scrollIntoView({
       behavior: 'smooth',
@@ -59,8 +58,8 @@ const Message: FC<{ user: string, text: string, scrollTo: boolean, ref_?: (el: H
   }, [scrollTo])
   return (
     <div ref={x => { x && (a(x), ref_ && ref_(x)) }}>
-      <div className="opacity-60">{user}</div>
-      <div className="text-xl">{text}</div>
+      <div className="opacity-60">{message.user.name} {message.createdAt}</div>
+      <div className="text-xl">{message.text}</div>
     </div>
   )
 }

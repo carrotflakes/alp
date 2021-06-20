@@ -37,6 +37,7 @@ export type Message = {
   id: Scalars['String'];
   text: Scalars['String'];
   user: User;
+  createdAt: Scalars['String'];
 };
 
 export type MessageChanged = {
@@ -121,6 +122,7 @@ export type PagingInput = {
 export type QueryRoot = {
   __typename?: 'QueryRoot';
   allMessages: Array<Message>;
+  allUsers: Array<User>;
   messagesOld: PagedMessages;
   messages: MessageConnection;
   session?: Maybe<Scalars['String']>;
@@ -243,7 +245,7 @@ export type MessageAddedSubscription = (
 
 export type MyMessageFragment = (
   { __typename?: 'Message' }
-  & Pick<Message, 'id' | 'text'>
+  & Pick<Message, 'id' | 'text' | 'createdAt'>
   & { user: (
     { __typename?: 'User' }
     & Pick<User, 'name'>
@@ -257,6 +259,7 @@ export const MyMessageFragmentDoc = gql`
   user {
     name
   }
+  createdAt
 }
     `;
 export const MeDocument = gql`

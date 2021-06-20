@@ -13,6 +13,7 @@ pub struct Message {
     pub id: ID,
     pub text: String,
     pub user_id: ID,
+    pub created_at: String,
 }
 
 #[Object]
@@ -33,6 +34,10 @@ impl Message {
             .unwrap()
             .1
             .clone()
+    }
+
+    async fn created_at(&self) -> &str {
+        &self.created_at
     }
 }
 

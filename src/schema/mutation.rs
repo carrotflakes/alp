@@ -23,6 +23,7 @@ impl MutationRoot {
                 id: id.clone(),
                 text,
                 user_id: user.id.clone(),
+                created_at: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S%z").to_string(),
             };
             entry.insert(message);
             SimpleBroker::publish(MessageChanged {

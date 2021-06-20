@@ -26,7 +26,7 @@ export const useMessages = () => {
       startCursor = null
     }
 
-    messagesResult.fetchMore({
+    messagesResult?.fetchMore({
       variables: {
         last: pageSize,
         startCursor,
