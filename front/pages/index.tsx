@@ -12,7 +12,11 @@ export default function Home() {
   const { currentUser } = useContext(AuthContext)
 
   const meRes = useMeQuery()
-  const [createUser] = useCreateUserMutation()
+  const [createUser] = useCreateUserMutation({
+    onCompleted: () => {
+      meRes.refetch()
+    },
+  })
 
   // const { loading, error, data } = useAllMessagesQuery();
 
@@ -45,7 +49,6 @@ export default function Home() {
   useEffect(() => {
     if (currentUser && meRes.error?.message === 'user not found') {
       createUser({variables: {name: currentUser.email || 'NONAME'}})
-      meRes.refetch()
     }
   }, [currentUser, meRes])
 

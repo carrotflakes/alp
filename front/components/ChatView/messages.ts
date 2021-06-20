@@ -34,7 +34,8 @@ export const useMessages = () => {
     })
   }, [messagesResult])
 
-  const messages = [...(messagesResult.data?.messages.edges?.filter(x => x).map(x => x?.node) || []), ...addedMessages] as MyMessageFragment[]
+  const messages = [...(messagesResult.data?.messages.edges?.filter(x => x).map(x => x?.node) || []), ...addedMessages]
+    .filter((x, _, l) => l.find(y => y?.id === x?.id) === x) as MyMessageFragment[]
 
   return {
     loading: messagesResult.loading || subResult.loading,
