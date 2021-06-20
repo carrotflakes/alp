@@ -7,7 +7,7 @@ services:
     ports:
       - 8000:8000
     volumes:
-      - .:/usr/src/myapp
+      - ./src:/usr/src/myapp/src
   front:
     build:
       context: ./front
