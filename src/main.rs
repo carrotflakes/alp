@@ -1,5 +1,4 @@
 mod auth;
-mod paging;
 mod schema;
 mod simple_broker;
 
@@ -8,9 +7,10 @@ use actix_web::{guard, http, web, App, HttpRequest, HttpResponse, HttpServer, Re
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::Schema;
 use async_graphql_actix_web::{Request, Response, WSSubscription};
-use schema::{MutationRoot, MySchema, QueryRoot, Storage, SubscriptionRoot};
+use schema::{MySchema, Storage};
 
 use crate::auth::Authorize;
+use crate::schema::{MutationRoot, QueryRoot, SubscriptionRoot};
 
 async fn index(schema: web::Data<MySchema>, req: HttpRequest, gql_req: Request) -> Response {
     let token = req

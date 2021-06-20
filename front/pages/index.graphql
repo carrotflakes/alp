@@ -1,8 +1,16 @@
+query me {
+  me {
+    name
+  }
+}
+
+mutation createUser($name: String!) {
+  createUser(name: $name)
+}
+
 query allMessages {
   allMessages {
-    id
-    uid
-    text
+    ...MyMessage
   }
 }
 
@@ -16,9 +24,7 @@ query messages($last: Int!, $startCursor: String) {
     }
     edges {
       node {
-        id
-        uid
-        text
+        ...MyMessage
       }
     }
   }
@@ -27,9 +33,15 @@ query messages($last: Int!, $startCursor: String) {
 subscription messageAdded {
   messages(mutationType: CREATED) {
     message {
-      id
-      uid
-      text
+      ...MyMessage
     }
+  }
+}
+
+fragment MyMessage on Message {
+  id
+  text
+  user {
+    name
   }
 }

@@ -35,8 +35,8 @@ export type IntEdge = {
 export type Message = {
   __typename?: 'Message';
   id: Scalars['String'];
-  uid: Scalars['String'];
   text: Scalars['String'];
+  user: User;
 };
 
 export type MessageChanged = {
@@ -66,11 +66,17 @@ export type MessageEdge = {
 export type MutationRoot = {
   __typename?: 'MutationRoot';
   postMessage: Scalars['ID'];
+  createUser: Scalars['ID'];
 };
 
 
 export type MutationRootPostMessageArgs = {
   text: Scalars['String'];
+};
+
+
+export type MutationRootCreateUserArgs = {
+  name: Scalars['String'];
 };
 
 export enum MutationType {
@@ -118,6 +124,7 @@ export type QueryRoot = {
   messagesOld: PagedMessages;
   messages: MessageConnection;
   session?: Maybe<Scalars['String']>;
+  me: User;
   numbers: IntConnection;
 };
 
@@ -158,6 +165,34 @@ export type SubscriptionRootMessagesArgs = {
   mutationType?: Maybe<MutationType>;
 };
 
+export type User = {
+  __typename?: 'User';
+  id: Scalars['ID'];
+  uid: Scalars['String'];
+  name: Scalars['String'];
+};
+
+export type MeQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MeQuery = (
+  { __typename?: 'QueryRoot' }
+  & { me: (
+    { __typename?: 'User' }
+    & Pick<User, 'name'>
+  ) }
+);
+
+export type CreateUserMutationVariables = Exact<{
+  name: Scalars['String'];
+}>;
+
+
+export type CreateUserMutation = (
+  { __typename?: 'MutationRoot' }
+  & Pick<MutationRoot, 'createUser'>
+);
+
 export type AllMessagesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -165,7 +200,7 @@ export type AllMessagesQuery = (
   { __typename?: 'QueryRoot' }
   & { allMessages: Array<(
     { __typename?: 'Message' }
-    & Pick<Message, 'id' | 'uid' | 'text'>
+    & MyMessageFragment
   )> }
 );
 
@@ -186,7 +221,7 @@ export type MessagesQuery = (
       { __typename?: 'MessageEdge' }
       & { node: (
         { __typename?: 'Message' }
-        & Pick<Message, 'id' | 'uid' | 'text'>
+        & MyMessageFragment
       ) }
     )>>> }
   ) }
@@ -201,21 +236,101 @@ export type MessageAddedSubscription = (
     { __typename?: 'MessageChanged' }
     & { message?: Maybe<(
       { __typename?: 'Message' }
-      & Pick<Message, 'id' | 'uid' | 'text'>
+      & MyMessageFragment
     )> }
   ) }
 );
 
+export type MyMessageFragment = (
+  { __typename?: 'Message' }
+  & Pick<Message, 'id' | 'text'>
+  & { user: (
+    { __typename?: 'User' }
+    & Pick<User, 'name'>
+  ) }
+);
 
-export const AllMessagesDocument = gql`
-    query allMessages {
-  allMessages {
-    id
-    uid
-    text
+export const MyMessageFragmentDoc = gql`
+    fragment MyMessage on Message {
+  id
+  text
+  user {
+    name
   }
 }
     `;
+export const MeDocument = gql`
+    query me {
+  me {
+    name
+  }
+}
+    `;
+
+/**
+ * __useMeQuery__
+ *
+ * To run a query within a React component, call `useMeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMeQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useMeQuery(baseOptions?: Apollo.QueryHookOptions<MeQuery, MeQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<MeQuery, MeQueryVariables>(MeDocument, options);
+      }
+export function useMeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<MeQuery, MeQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<MeQuery, MeQueryVariables>(MeDocument, options);
+        }
+export type MeQueryHookResult = ReturnType<typeof useMeQuery>;
+export type MeLazyQueryHookResult = ReturnType<typeof useMeLazyQuery>;
+export type MeQueryResult = Apollo.QueryResult<MeQuery, MeQueryVariables>;
+export const CreateUserDocument = gql`
+    mutation createUser($name: String!) {
+  createUser(name: $name)
+}
+    `;
+export type CreateUserMutationFn = Apollo.MutationFunction<CreateUserMutation, CreateUserMutationVariables>;
+
+/**
+ * __useCreateUserMutation__
+ *
+ * To run a mutation, you first call `useCreateUserMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateUserMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createUserMutation, { data, loading, error }] = useCreateUserMutation({
+ *   variables: {
+ *      name: // value for 'name'
+ *   },
+ * });
+ */
+export function useCreateUserMutation(baseOptions?: Apollo.MutationHookOptions<CreateUserMutation, CreateUserMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateUserMutation, CreateUserMutationVariables>(CreateUserDocument, options);
+      }
+export type CreateUserMutationHookResult = ReturnType<typeof useCreateUserMutation>;
+export type CreateUserMutationResult = Apollo.MutationResult<CreateUserMutation>;
+export type CreateUserMutationOptions = Apollo.BaseMutationOptions<CreateUserMutation, CreateUserMutationVariables>;
+export const AllMessagesDocument = gql`
+    query allMessages {
+  allMessages {
+    ...MyMessage
+  }
+}
+    ${MyMessageFragmentDoc}`;
 
 /**
  * __useAllMessagesQuery__
@@ -254,14 +369,12 @@ export const MessagesDocument = gql`
     }
     edges {
       node {
-        id
-        uid
-        text
+        ...MyMessage
       }
     }
   }
 }
-    `;
+    ${MyMessageFragmentDoc}`;
 
 /**
  * __useMessagesQuery__
@@ -295,13 +408,11 @@ export const MessageAddedDocument = gql`
     subscription messageAdded {
   messages(mutationType: CREATED) {
     message {
-      id
-      uid
-      text
+      ...MyMessage
     }
   }
 }
-    `;
+    ${MyMessageFragmentDoc}`;
 
 /**
  * __useMessageAddedSubscription__

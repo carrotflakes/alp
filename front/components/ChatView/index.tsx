@@ -1,5 +1,6 @@
 import { FC, useCallback, useRef, useState } from "react";
 import 'tailwindcss/tailwind.css';
+import { MyMessageFragment } from "../../generated/graphql";
 import { useMessages } from "./messages";
 
 type props = { width: number, height: number }
@@ -36,10 +37,10 @@ export const ChatView: FC<props> = ({ width, height }) => {
             </div> : null
       }
       {
-        mes.messages.map((e: any, i: number) =>
+        mes.messages.map((e: MyMessageFragment, i: number) =>
           <Message
             key={e.id}
-            user={e.uid}
+            user={e.user.name}
             text={e.text}
             scrollTo={i === mes.messages.length - 1}
             ref_={i === 0 ? topMessageRef : undefined}

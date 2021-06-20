@@ -1,11 +1,11 @@
 import { useCallback, useState } from "react";
-import { useMessageAddedSubscription, useMessagesQuery } from "../../generated/graphql";
+import { MyMessageFragment, useMessageAddedSubscription, useMessagesQuery } from "../../generated/graphql";
 
 export const useMessages = () => {
   const pageSize = 10
   const messagesResult = useMessagesQuery({ variables: { last: pageSize } });
 
-  const [addedMessages, setAddedMessages] = useState([] as any[])
+  const [addedMessages, setAddedMessages] = useState([] as MyMessageFragment[])
 
   const onSubscriptionData = useCallback((x) => {
     const message = x.subscriptionData.data.messages.message
@@ -34,7 +34,7 @@ export const useMessages = () => {
     })
   }, [messagesResult])
 
-  const messages = [...(messagesResult.data?.messages.edges?.filter(x => x).map(x => x?.node) || []), ...addedMessages]
+  const messages = [...(messagesResult.data?.messages.edges?.filter(x => x).map(x => x?.node) || []), ...addedMessages] as MyMessageFragment[]
 
   return {
     loading: messagesResult.loading || subResult.loading,

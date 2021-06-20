@@ -2,16 +2,19 @@ import { gql, useLazyQuery, useMutation } from '@apollo/client'
 import firebase from 'firebase'
 import Head from 'next/head'
 import Link from 'next/link'
-import { useCallback, useContext, useState } from 'react'
+import { useCallback, useContext, useEffect, useState } from 'react'
 import { ChatView } from '../components/ChatView'
 import { AuthContext } from '../context/auth'
-import { useAllMessagesQuery, useMessageAddedSubscription } from "../generated/graphql"
+import { useAllMessagesQuery, useCreateUserMutation, useMeQuery, useMessageAddedSubscription } from "../generated/graphql"
 import styles from '../styles/Home.module.css'
 
 export default function Home() {
   const { currentUser } = useContext(AuthContext)
 
-  const { loading, error, data } = useAllMessagesQuery();
+  const meRes = useMeQuery()
+  const [createUser] = useCreateUserMutation()
+
+  // const { loading, error, data } = useAllMessagesQuery();
 
   const [postMessage, {data: posted}] = useMutation(gql`
   mutation($text: String) {
@@ -19,16 +22,16 @@ export default function Home() {
   }
   `)
 
-  const [addedMessages, setAddedMessages] = useState([] as any[])
+  // const [addedMessages, setAddedMessages] = useState([] as any[])
 
-  const onSubscriptionData = useCallback((x) => {
-    const message = x.subscriptionData.data.messages.message
-    setAddedMessages([...addedMessages, message])
-  }, [addedMessages])
+  // const onSubscriptionData = useCallback((x) => {
+  //   const message = x.subscriptionData.data.messages.message
+  //   setAddedMessages([...addedMessages, message])
+  // }, [addedMessages])
 
-  const sub = useMessageAddedSubscription({
-    onSubscriptionData,
-  })
+  // const sub = useMessageAddedSubscription({
+  //   onSubscriptionData,
+  // })
 
   const [inputText, setInputText] = useState("")
 
@@ -37,7 +40,18 @@ export default function Home() {
     setInputText("")
   }, [inputText, postMessage])
 
-  const messages = [...(data?.allMessages || []), ...addedMessages]
+  // const messages = [...(data?.allMessages || []), ...addedMessages]
+
+  useEffect(() => {
+    if (currentUser && meRes.error?.message === 'user not found') {
+      createUser({variables: {name: currentUser.email || 'NONAME'}})
+      meRes.refetch()
+    }
+  }, [currentUser, meRes])
+
+  if (meRes.error) {
+    return <div>Error {meRes.error.message}</div>
+  }
 
   return (
     <div className={styles.container}>
@@ -53,11 +67,11 @@ export default function Home() {
           <div>signed in as {currentUser?.displayName}<div onClick={() => firebase.auth().signOut()}>sign out</div></div> :
           <div>please <Link href="/signin">sign in</Link></div>
         }
-        <div>query loading: {loading}</div>
+        {/* <div>query loading: {loading}</div>
         <div>query error: {JSON.stringify(error)}</div>
         <div>subscription loading: {sub.loading}</div>
         <div>subscription error: {JSON.stringify(sub.error)}</div>
-        <div>subscription: {JSON.stringify(sub.data?.messages.message?.text)}</div>
+        <div>subscription: {JSON.stringify(sub.data?.messages.message?.text)}</div> */}
         {/* <div className="bg-blue-300 border-black border-2">
           {messages.map((e: any, i: number) => (<div key={i}>{e.uid + ": " + JSON.stringify(e.text)}</div>))}
         </div> */}
