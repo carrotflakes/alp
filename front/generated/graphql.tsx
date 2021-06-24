@@ -66,8 +66,8 @@ export type MessageEdge = {
 
 export type MutationRoot = {
   __typename?: 'MutationRoot';
-  postMessage: Scalars['ID'];
-  createUser: Scalars['ID'];
+  postMessage: Message;
+  createUser: User;
 };
 
 
@@ -181,7 +181,7 @@ export type MeQuery = (
   { __typename?: 'QueryRoot' }
   & { me: (
     { __typename?: 'User' }
-    & Pick<User, 'name'>
+    & Pick<User, 'id' | 'name'>
   ) }
 );
 
@@ -192,7 +192,10 @@ export type CreateUserMutationVariables = Exact<{
 
 export type CreateUserMutation = (
   { __typename?: 'MutationRoot' }
-  & Pick<MutationRoot, 'createUser'>
+  & { createUser: (
+    { __typename?: 'User' }
+    & Pick<User, 'id' | 'uid' | 'name'>
+  ) }
 );
 
 export type AllMessagesQueryVariables = Exact<{ [key: string]: never; }>;
@@ -226,6 +229,23 @@ export type MessagesQuery = (
         & MyMessageFragment
       ) }
     )>>> }
+  ) }
+);
+
+export type PostMessageMutationVariables = Exact<{
+  text: Scalars['String'];
+}>;
+
+
+export type PostMessageMutation = (
+  { __typename?: 'MutationRoot' }
+  & { postMessage: (
+    { __typename?: 'Message' }
+    & Pick<Message, 'id' | 'text' | 'createdAt'>
+    & { user: (
+      { __typename?: 'User' }
+      & Pick<User, 'id' | 'name'>
+    ) }
   ) }
 );
 
@@ -265,6 +285,7 @@ export const MyMessageFragmentDoc = gql`
 export const MeDocument = gql`
     query me {
   me {
+    id
     name
   }
 }
@@ -298,7 +319,11 @@ export type MeLazyQueryHookResult = ReturnType<typeof useMeLazyQuery>;
 export type MeQueryResult = Apollo.QueryResult<MeQuery, MeQueryVariables>;
 export const CreateUserDocument = gql`
     mutation createUser($name: String!) {
-  createUser(name: $name)
+  createUser(name: $name) {
+    id
+    uid
+    name
+  }
 }
     `;
 export type CreateUserMutationFn = Apollo.MutationFunction<CreateUserMutation, CreateUserMutationVariables>;
@@ -407,6 +432,45 @@ export function useMessagesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<M
 export type MessagesQueryHookResult = ReturnType<typeof useMessagesQuery>;
 export type MessagesLazyQueryHookResult = ReturnType<typeof useMessagesLazyQuery>;
 export type MessagesQueryResult = Apollo.QueryResult<MessagesQuery, MessagesQueryVariables>;
+export const PostMessageDocument = gql`
+    mutation postMessage($text: String!) {
+  postMessage(text: $text) {
+    id
+    text
+    user {
+      id
+      name
+    }
+    createdAt
+  }
+}
+    `;
+export type PostMessageMutationFn = Apollo.MutationFunction<PostMessageMutation, PostMessageMutationVariables>;
+
+/**
+ * __usePostMessageMutation__
+ *
+ * To run a mutation, you first call `usePostMessageMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `usePostMessageMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [postMessageMutation, { data, loading, error }] = usePostMessageMutation({
+ *   variables: {
+ *      text: // value for 'text'
+ *   },
+ * });
+ */
+export function usePostMessageMutation(baseOptions?: Apollo.MutationHookOptions<PostMessageMutation, PostMessageMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<PostMessageMutation, PostMessageMutationVariables>(PostMessageDocument, options);
+      }
+export type PostMessageMutationHookResult = ReturnType<typeof usePostMessageMutation>;
+export type PostMessageMutationResult = Apollo.MutationResult<PostMessageMutation>;
+export type PostMessageMutationOptions = Apollo.BaseMutationOptions<PostMessageMutation, PostMessageMutationVariables>;
 export const MessageAddedDocument = gql`
     subscription messageAdded {
   messages(mutationType: CREATED) {

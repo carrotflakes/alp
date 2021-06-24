@@ -1,11 +1,10 @@
-import { gql, useLazyQuery, useMutation } from '@apollo/client'
 import firebase from 'firebase'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useCallback, useContext, useEffect, useState } from 'react'
 import { ChatView } from '../components/ChatView'
 import { AuthContext } from '../context/auth'
-import { useAllMessagesQuery, useCreateUserMutation, useMeQuery, useMessageAddedSubscription } from "../generated/graphql"
+import { useCreateUserMutation, useMeQuery, usePostMessageMutation } from "../generated/graphql"
 import styles from '../styles/Home.module.css'
 
 export default function Home() {
@@ -18,33 +17,24 @@ export default function Home() {
     },
   })
 
-  // const { loading, error, data } = useAllMessagesQuery();
-
-  const [postMessage, {data: posted}] = useMutation(gql`
-  mutation($text: String) {
-    postMessage(text: $text)
-  }
-  `)
-
-  // const [addedMessages, setAddedMessages] = useState([] as any[])
-
-  // const onSubscriptionData = useCallback((x) => {
-  //   const message = x.subscriptionData.data.messages.message
-  //   setAddedMessages([...addedMessages, message])
-  // }, [addedMessages])
-
-  // const sub = useMessageAddedSubscription({
-  //   onSubscriptionData,
-  // })
+  const [postMessage] = usePostMessageMutation()
 
   const [inputText, setInputText] = useState("")
 
   const post = useCallback(() => {
-    postMessage({variables: {text: inputText}})
+    meRes.data &&
+    postMessage({variables: {text: inputText},
+      optimisticResponse: {
+        postMessage: {
+          id: 'temp-id',
+          __typename: 'Message',
+          text: inputText,
+          createdAt: '',
+          user: meRes.data.me
+        }
+      }})
     setInputText("")
   }, [inputText, postMessage])
-
-  // const messages = [...(data?.allMessages || []), ...addedMessages]
 
   useEffect(() => {
     if (currentUser && meRes.error?.message === 'user not found') {
@@ -70,14 +60,6 @@ export default function Home() {
           <div>signed in as {currentUser?.displayName}<div onClick={() => firebase.auth().signOut()}>sign out</div></div> :
           <div>please <Link href="/signin">sign in</Link></div>
         }
-        {/* <div>query loading: {loading}</div>
-        <div>query error: {JSON.stringify(error)}</div>
-        <div>subscription loading: {sub.loading}</div>
-        <div>subscription error: {JSON.stringify(sub.error)}</div>
-        <div>subscription: {JSON.stringify(sub.data?.messages.message?.text)}</div> */}
-        {/* <div className="bg-blue-300 border-black border-2">
-          {messages.map((e: any, i: number) => (<div key={i}>{e.uid + ": " + JSON.stringify(e.text)}</div>))}
-        </div> */}
 
         <ChatView width={400} height={400}></ChatView>
         <div className="w-[400px]">

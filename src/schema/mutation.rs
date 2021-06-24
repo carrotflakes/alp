@@ -7,7 +7,7 @@ pub struct MutationRoot;
 
 #[Object]
 impl MutationRoot {
-    async fn post_message(&self, ctx: &Context<'_>, text: String) -> async_graphql::Result<ID> {
+    async fn post_message(&self, ctx: &Context<'_>, text: String) -> async_graphql::Result<Message> {
         let uid = varify_token(ctx)?;
         let slabs = &mut ctx.data_unchecked::<Storage>().lock().await;
 
@@ -25,18 +25,18 @@ impl MutationRoot {
                 user_id: user.id.clone(),
                 created_at: chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S%z").to_string(),
             };
-            entry.insert(message);
+            entry.insert(message.clone());
             SimpleBroker::publish(MessageChanged {
                 mutation_type: MutationType::Created,
                 id: id.clone(),
             });
-            Ok(id)
+            Ok(message)
         } else {
             Err(format!("user not found").into())
         }
     }
 
-    async fn create_user(&self, ctx: &Context<'_>, name: String) -> async_graphql::Result<ID> {
+    async fn create_user(&self, ctx: &Context<'_>, name: String) -> async_graphql::Result<User> {
         let uid = varify_token(ctx)?;
         let mut slabs = ctx.data_unchecked::<Storage>().lock().await;
 
@@ -50,8 +50,8 @@ impl MutationRoot {
                 uid: uid.0.to_string(),
                 name,
             };
-            entry.insert(user);
-            Ok(id)
+            entry.insert(user.clone());
+            Ok(user)
         }
     }
 }

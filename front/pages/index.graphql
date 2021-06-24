@@ -1,11 +1,16 @@
 query me {
   me {
+    id
     name
   }
 }
 
 mutation createUser($name: String!) {
-  createUser(name: $name)
+  createUser(name: $name) {
+    id
+    uid
+    name
+  }
 }
 
 query allMessages {
@@ -27,6 +32,18 @@ query messages($last: Int!, $startCursor: String) {
         ...MyMessage
       }
     }
+  }
+}
+
+mutation postMessage($text: String!) {
+  postMessage(text: $text) {
+    id
+    text
+    user {
+      id
+      name
+	  }
+    createdAt
   }
 }
 
