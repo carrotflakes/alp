@@ -22,23 +22,26 @@ export default function Home() {
   const [inputText, setInputText] = useState("")
 
   const post = useCallback(() => {
-    meRes.data &&
-    postMessage({variables: {text: inputText},
-      optimisticResponse: {
-        postMessage: {
-          id: 'temp-id',
-          __typename: 'Message',
-          text: inputText,
-          createdAt: '',
-          user: meRes.data.me
+    if (meRes.data) {
+      postMessage({
+        variables: { text: inputText },
+        optimisticResponse: {
+          postMessage: {
+            id: 'temp-id',
+            __typename: 'Message',
+            text: inputText,
+            createdAt: '',
+            user: meRes.data.me
+          }
         }
-      }})
-    setInputText("")
+      })
+      setInputText("")
+    }
   }, [inputText, postMessage])
 
   useEffect(() => {
     if (currentUser && meRes.error?.message === 'user not found') {
-      createUser({variables: {name: currentUser.email || 'NONAME'}})
+      createUser({ variables: { name: currentUser.email || 'NONAME' } })
     }
   }, [currentUser, meRes])
 
@@ -57,8 +60,8 @@ export default function Home() {
       <main className={styles.main}>
         {
           currentUser ?
-          <div>signed in as {currentUser?.displayName}<div onClick={() => firebase.auth().signOut()}>sign out</div></div> :
-          <div>please <Link href="/signin">sign in</Link></div>
+            <div>signed in as {currentUser?.displayName}<div onClick={() => firebase.auth().signOut()}>sign out</div></div> :
+            <div>please <Link href="/signin">sign in</Link></div>
         }
 
         <ChatView width={400} height={400}></ChatView>
@@ -68,7 +71,7 @@ export default function Home() {
             type="text"
             value={inputText}
             onChange={e => setInputText(e.target.value)}
-            onKeyDown={e => {e.shiftKey && e.key === "Enter" && post()}}
+            onKeyDown={e => { e.shiftKey && e.key === "Enter" && post() }}
           ></input>
           <button onClick={post}>send</button>
         </div>

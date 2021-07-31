@@ -1,7 +1,7 @@
 import { FC, useCallback, useRef, useState } from "react";
 import 'tailwindcss/tailwind.css';
 import { MyMessageFragment } from "../../generated/graphql";
-import { useMessages } from "./messages";
+import { useMessages } from "./useMessages";
 
 type props = { width: number, height: number }
 
