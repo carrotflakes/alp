@@ -7,6 +7,7 @@ relies:
 - actix-web
 - Next.js
 - Firebase Authentication
+- PostgreSQL
 
 ## Usage
 
