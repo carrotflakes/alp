@@ -148,14 +148,9 @@ impl Usecase {
         mutation_type: Option<MutationType>,
     ) -> impl Stream<Item = MessageChanged> {
         SimpleBroker::<MessageChanged>::subscribe().filter_map(move |event| {
-            let res = if if let Some(mutation_type) = mutation_type {
-                event.mutation_type == mutation_type
-            } else {
-                true
-            } {
-                Some(event)
-            } else {
-                None
+            let res = match mutation_type {
+                Some(mt) if mt != event.mutation_type => None,
+                _ => Some(event),
             };
             async move { res }
         })
