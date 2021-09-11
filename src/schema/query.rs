@@ -1,5 +1,5 @@
 use super::objects::{Message, User};
-use crate::schema::{varify_token, MyToken, Storage};
+use crate::schema::{varify_token, Storage};
 use async_graphql::connection::{Connection, Edge, EmptyFields};
 use async_graphql::{Context, Object, Result};
 
@@ -9,15 +9,8 @@ pub struct QueryRoot;
 impl QueryRoot {
     async fn all_users(&self, ctx: &Context<'_>) -> Result<Vec<User>> {
         let storage = &ctx.data_unchecked::<Storage>();
-        let users = storage.usecase.get_all_users().map_err(|x| x)?;
-        Ok(users
-            .into_iter()
-            .map(|x| User {
-                id: x.id.into(),
-                uid: x.uid,
-                name: x.name,
-            })
-            .collect())
+        let users = storage.usecase.get_all_users()?;
+        Ok(users.into_iter().map(|user| user.into()).collect())
     }
 
     async fn messages(
@@ -38,23 +31,14 @@ impl QueryRoot {
                 let (messages, has_prev, has_next) =
                     usecase.get_messages(after, before, first, last)?;
                 let mut connection = Connection::new(has_prev, has_next);
-                connection.append(messages.into_iter().map(|m| {
-                    let message = Message {
-                        id: m.id,
-                        text: m.text,
-                        user_id: m.user_id,
-                        created_at: m.created_at,
-                    };
-                    Edge::with_additional_fields(m.id.to_string(), message, EmptyFields)
+                connection.append(messages.into_iter().map(|message| {
+                    let message: Message = message.into();
+                    Edge::with_additional_fields(message.id.to_string(), message, EmptyFields)
                 }));
                 Ok(connection)
             },
         )
         .await
-    }
-
-    async fn session(&self, ctx: &Context<'_>) -> Option<String> {
-        ctx.data_opt::<MyToken>().map(|token| token.0.to_string())
     }
 
     async fn me(&self, ctx: &Context<'_>) -> Result<User> {
@@ -63,11 +47,7 @@ impl QueryRoot {
         let storage = &ctx.data_unchecked::<Storage>();
         let user = storage.usecase.find_user_by_uid(uid.0.as_str())?;
         if let Some(user) = user {
-            Ok(User {
-                id: user.id.into(),
-                uid: user.uid,
-                name: user.name,
-            })
+            Ok(user.into())
         } else {
             Err(format!("user not found").into())
         }

@@ -18,6 +18,16 @@ impl User {
     }
 }
 
+impl From<crate::domain::User> for User {
+    fn from(u: crate::domain::User) -> Self {
+        User {
+            id: u.id,
+            uid: u.uid,
+            name: u.name,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Message {
     pub id: usize,
@@ -38,13 +48,10 @@ impl Message {
 
     async fn user(&self, ctx: &Context<'_>) -> Result<User> {
         let usecase = &ctx.data_unchecked::<Storage>().usecase;
-
-        let user = usecase.get_user(self.user_id).map_err(|x| x)?;
-        Ok(User {
-            id: user.id.into(),
-            uid: user.uid,
-            name: user.name,
-        })
+        usecase
+            .get_user(self.user_id)
+            .map(|user| user.into())
+            .map_err(|x| x.into())
     }
 
     async fn created_at(&self) -> String {
@@ -52,16 +59,21 @@ impl Message {
     }
 }
 
+impl From<crate::domain::Message> for Message {
+    fn from(u: crate::domain::Message) -> Self {
+        Message {
+            id: u.id,
+            text: u.text,
+            user_id: u.user_id,
+            created_at: u.created_at,
+        }
+    }
+}
+
 #[derive(Enum, Eq, PartialEq, Copy, Clone)]
 pub enum MutationType {
     Created,
     Deleted,
-}
-
-#[derive(Clone)]
-pub struct BookChanged {
-    mutation_type: MutationType,
-    id: ID,
 }
 
 #[derive(Clone)]
@@ -84,12 +96,7 @@ impl MessageChanged {
         let usecase = &ctx.data_unchecked::<Storage>().usecase;
         usecase
             .get_message(self.id)
-            .map(|message| Message {
-                id: message.id,
-                text: message.text,
-                user_id: message.user_id,
-                created_at: message.created_at,
-            })
+            .map(|message| message.into())
             .map_err(|x| x.into())
     }
 }
