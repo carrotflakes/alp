@@ -45,7 +45,7 @@ export default function Home() {
     }
   }, [currentUser, meRes])
 
-  if (meRes.error) {
+  if (currentUser && meRes.error) {
     return <div>Error {meRes.error.message}</div>
   }
 
