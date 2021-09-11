@@ -45,8 +45,6 @@ impl Authorize {
             },
         };
 
-        println!("{:?}", token_data.claims);
-        // println!("{:?}", token_data.header);
         Ok(token_data.claims.sub.map(UID))
     }
 }
