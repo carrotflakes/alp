@@ -4,29 +4,46 @@ mod paging;
 mod query;
 mod subscription;
 
-use crate::auth::{Authorize, UID};
+use crate::{
+    auth::{Authorize, UID},
+    usecases::Usecase,
+};
 use async_graphql::{Context, Result, Schema};
 use futures::lock::Mutex;
 use slab::Slab;
 use std::sync::Arc;
 
-use self::objects::{Message, User};
+use objects::{Message, User};
 
-pub use mutation::MutationRoot;
-pub use query::QueryRoot;
-pub use subscription::SubscriptionRoot;
+use mutation::MutationRoot;
+use query::QueryRoot;
+use subscription::SubscriptionRoot;
 
 pub struct MyToken(pub String);
 
 pub type MySchema = Schema<QueryRoot, MutationRoot, SubscriptionRoot>;
 
-#[derive(Default)]
-pub struct Slabs {
-    pub messages: Slab<Message>,
-    pub users: Slab<User>,
+pub fn new_schema(auth: Authorize, usecase: Usecase) -> MySchema {
+    let storage = StorageInner {
+        messages: Default::default(),
+        users: Default::default(),
+        usecase,
+    };
+    let storage = Arc::new(Mutex::new(storage));
+
+    Schema::build(QueryRoot, MutationRoot, SubscriptionRoot)
+        .data(storage)
+        .data(auth)
+        .finish()
 }
 
-pub type Storage = Arc<Mutex<Slabs>>;
+pub type Storage = Arc<Mutex<StorageInner>>;
+
+pub struct StorageInner {
+    pub messages: Slab<Message>,
+    pub users: Slab<User>,
+    pub usecase: Usecase,
+}
 
 pub fn varify_token(ctx: &Context<'_>) -> Result<UID, async_graphql::Error> {
     let uid = if let Some(token) = ctx.data_opt::<MyToken>() {

@@ -1,4 +1,4 @@
-FROM node:lts-slim AS deps
+FROM node:lts-slim
 
 WORKDIR /opt/app
 COPY package.json package-lock.json ./

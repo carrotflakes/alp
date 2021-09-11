@@ -8,6 +8,8 @@ services:
       - 8000:8000
     volumes:
       - ./src:/usr/src/myapp/src
+    environment:
+      DATABASE_URL: "postgres://root:root@db"
   front:
     build:
       context: ./front
@@ -16,3 +18,16 @@ services:
       - 3000:3000
     volumes:
       - ./front:/opt/app
+  db:
+    image: postgres:13.4
+    ports:
+      - 5432:5432
+    volumes:
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    hostname: postgres
+    restart: always
+    user: root

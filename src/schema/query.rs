@@ -13,9 +13,17 @@ impl QueryRoot {
         messages.iter().map(|(_, book)| book).cloned().collect()
     }
 
-    async fn all_users(&self, ctx: &Context<'_>) -> Vec<User> {
-        let users = &ctx.data_unchecked::<Storage>().lock().await.users;
-        users.iter().map(|(_, user)| user).cloned().collect()
+    async fn all_users(&self, ctx: &Context<'_>) -> Result<Vec<User>> {
+        let storage = &mut ctx.data_unchecked::<Storage>().lock().await;
+        let users = storage.usecase.get_all_users().map_err(|x| x)?;
+        Ok(users
+            .into_iter()
+            .map(|x| User {
+                id: x.id.into(),
+                uid: x.uid,
+                name: x.name,
+            })
+            .collect())
     }
 
     async fn messages_old(
@@ -181,14 +189,17 @@ impl QueryRoot {
 
     async fn me(&self, ctx: &Context<'_>) -> Result<User> {
         let uid = varify_token(ctx)?;
-        let slabs = &mut ctx.data_unchecked::<Storage>().lock().await;
-        if let Some(user) = slabs
-            .users
-            .iter()
-            .find(|x| x.1.uid == uid.0)
-            .map(|x| x.1.clone())
-        {
-            Ok(user)
+
+        let storage = &mut ctx.data_unchecked::<Storage>().lock().await;
+        let user = storage
+            .usecase
+            .find_user_by_uid(uid.0.as_str())?;
+        if let Some(user) = user {
+            Ok(User {
+                id: user.id.into(),
+                uid: user.uid,
+                name: user.name,
+            })
         } else {
             Err(format!("user not found").into())
         }

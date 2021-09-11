@@ -28,3 +28,8 @@ serde = "1.0"
 jsonwebtoken = "7"
 
 chrono = "0.4"
+
+diesel = { version = "1.4.4", features = ["postgres", "r2d2", "chrono"] }
+r2d2 = "*"
+r2d2_postgres = "*"
+dotenv = "0.15"

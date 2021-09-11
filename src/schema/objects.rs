@@ -3,7 +3,7 @@ use async_graphql::{Context, Enum, Object, Result, SimpleObject, ID};
 
 #[derive(Clone, SimpleObject)]
 pub struct User {
-    pub id: ID,
+    pub id: usize,
     pub uid: String,
     pub name: String,
 }
@@ -12,7 +12,7 @@ pub struct User {
 pub struct Message {
     pub id: ID,
     pub text: String,
-    pub user_id: ID,
+    pub user_id: usize,
     pub created_at: String,
 }
 
@@ -26,14 +26,15 @@ impl Message {
         &self.text
     }
 
-    async fn user(&self, ctx: &Context<'_>) -> User {
-        let users = &ctx.data_unchecked::<Storage>().lock().await.users;
-        users
-            .iter()
-            .find(|x| x.1.id == self.user_id)
-            .unwrap()
-            .1
-            .clone()
+    async fn user(&self, ctx: &Context<'_>) -> Result<User> {
+        let usecase = &ctx.data_unchecked::<Storage>().lock().await.usecase;
+
+        let user = usecase.get_user(self.user_id).map_err(|x| x)?;
+        Ok(User {
+            id: user.id.into(),
+            uid: user.uid,
+            name: user.name,
+        })
     }
 
     async fn created_at(&self) -> &str {

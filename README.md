@@ -16,6 +16,12 @@ $ docker-compose up
 
 Then open localhost:3000 in your browser.
 
+## Development
+
+``` sh
+$ cargo install diesel_cli --no-default-features --features postgres
+```
+
 ## Author
 
 * carrotflakes (carrotflakes@gmail.com)

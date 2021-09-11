@@ -1,16 +1,29 @@
+#[macro_use]
+extern crate diesel;
+extern crate dotenv;
+
 mod auth;
+mod db;
+mod domain;
+mod infra;
 mod schema;
 mod simple_broker;
+mod usecases;
+
+use std::sync::Arc;
 
 use actix_cors::Cors;
 use actix_web::{guard, http, web, App, HttpRequest, HttpResponse, HttpServer, Result};
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::Schema;
 use async_graphql_actix_web::{Request, Response, WSSubscription};
-use schema::{MySchema, Storage};
+use schema::MySchema;
 
 use crate::auth::Authorize;
-use crate::schema::{MutationRoot, QueryRoot, SubscriptionRoot};
+use crate::db::new_pool;
+use crate::infra::Repository;
+use crate::schema::new_schema;
+use crate::usecases::Usecase;
 
 async fn index(schema: web::Data<MySchema>, req: HttpRequest, gql_req: Request) -> Response {
     let token = req
@@ -54,25 +67,17 @@ async fn index_ws(
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
+    let conn = new_pool().unwrap();
     let auth = Authorize::new().await;
-    let schema = Schema::build(QueryRoot, MutationRoot, SubscriptionRoot)
-        .data(Storage::default())
-        .data(auth)
-        .finish();
+    let usecase = Usecase::new(Arc::new(Repository::new(conn)));
+    let schema = new_schema(auth, usecase);
 
     println!("Playground: http://localhost:8000");
 
     HttpServer::new(move || {
-        let cors = Cors::default()
-            .allow_any_origin()
-            .allowed_methods(vec!["GET", "POST"])
-            .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
-            .allowed_header(http::header::CONTENT_TYPE)
-            .max_age(3600);
-
         App::new()
             .data(schema.clone())
-            .wrap(cors)
+            .wrap(new_cors())
             .service(web::resource("/").guard(guard::Post()).to(index))
             .service(
                 web::resource("/")
@@ -85,4 +90,13 @@ async fn main() -> std::io::Result<()> {
     .bind("0.0.0.0:8000")?
     .run()
     .await
+}
+
+fn new_cors() -> Cors {
+    Cors::default()
+        .allow_any_origin()
+        .allowed_methods(vec!["GET", "POST"])
+        .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
+        .allowed_header(http::header::CONTENT_TYPE)
+        .max_age(3600)
 }
