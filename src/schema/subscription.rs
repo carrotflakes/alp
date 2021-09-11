@@ -1,6 +1,8 @@
-use super::objects::{MessageChanged, MutationType};
+use super::{
+    objects::{MessageChanged, MutationType},
+    Storage,
+};
 use crate::schema::varify_token;
-use crate::simple_broker::SimpleBroker;
 use async_graphql::{Context, Subscription};
 use futures::{Stream, StreamExt};
 use std::time::Duration;
@@ -26,17 +28,22 @@ impl SubscriptionRoot {
         mutation_type: Option<MutationType>,
     ) -> async_graphql::Result<impl Stream<Item = MessageChanged>> {
         let uid = varify_token(ctx)?;
-        println!("uid: {}", uid.0);
 
-        Ok(
-            SimpleBroker::<MessageChanged>::subscribe().filter(move |event| {
-                let res = if let Some(mutation_type) = mutation_type {
-                    event.mutation_type == mutation_type
-                } else {
-                    true
-                };
-                async move { res }
-            }),
-        )
+        let usecase = &ctx.data_unchecked::<Storage>().usecase;
+        let mutation_type = match mutation_type {
+            Some(MutationType::Created) => Some(crate::domain::MutationType::Created),
+            Some(MutationType::Deleted) => Some(crate::domain::MutationType::Deleted),
+            None => None,
+        };
+
+        Ok(usecase
+            .subscribe_messages(mutation_type)
+            .map(|event| MessageChanged {
+                mutation_type: match event.mutation_type {
+                    crate::domain::MutationType::Created => MutationType::Created,
+                    crate::domain::MutationType::Deleted => MutationType::Deleted,
+                },
+                id: event.id.into(),
+            }))
     }
 }

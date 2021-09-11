@@ -1,20 +1,14 @@
 mod mutation;
 mod objects;
-mod paging;
 mod query;
 mod subscription;
+
+use async_graphql::{Context, Result, Schema};
 
 use crate::{
     auth::{Authorize, UID},
     usecases::Usecase,
 };
-use async_graphql::{Context, Result, Schema};
-use futures::lock::Mutex;
-use slab::Slab;
-use std::sync::Arc;
-
-use objects::{Message, User};
-
 use mutation::MutationRoot;
 use query::QueryRoot;
 use subscription::SubscriptionRoot;
@@ -24,12 +18,7 @@ pub struct MyToken(pub String);
 pub type MySchema = Schema<QueryRoot, MutationRoot, SubscriptionRoot>;
 
 pub fn new_schema(auth: Authorize, usecase: Usecase) -> MySchema {
-    let storage = StorageInner {
-        messages: Default::default(),
-        users: Default::default(),
-        usecase,
-    };
-    let storage = Arc::new(Mutex::new(storage));
+    let storage = Storage { usecase };
 
     Schema::build(QueryRoot, MutationRoot, SubscriptionRoot)
         .data(storage)
@@ -37,11 +26,7 @@ pub fn new_schema(auth: Authorize, usecase: Usecase) -> MySchema {
         .finish()
 }
 
-pub type Storage = Arc<Mutex<StorageInner>>;
-
-pub struct StorageInner {
-    pub messages: Slab<Message>,
-    pub users: Slab<User>,
+pub struct Storage {
     pub usecase: Usecase,
 }
 

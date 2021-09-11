@@ -1,25 +1,35 @@
-use super::{paging::MyPageInfo, Storage};
-use async_graphql::{Context, Enum, Object, Result, SimpleObject, ID};
+use super::Storage;
+use async_graphql::{ComplexObject, Context, Enum, Object, Result, SimpleObject, ID};
+use chrono::NaiveDateTime;
 
 #[derive(Clone, SimpleObject)]
+#[graphql(complex)]
 pub struct User {
+    #[graphql(skip)]
     pub id: usize,
     pub uid: String,
     pub name: String,
 }
 
+#[ComplexObject]
+impl User {
+    async fn id(&self) -> ID {
+        ID(self.id.to_string())
+    }
+}
+
 #[derive(Clone)]
 pub struct Message {
-    pub id: ID,
+    pub id: usize,
     pub text: String,
     pub user_id: usize,
-    pub created_at: String,
+    pub created_at: NaiveDateTime,
 }
 
 #[Object]
 impl Message {
-    async fn id(&self) -> &str {
-        &self.id
+    async fn id(&self) -> ID {
+        ID(self.id.to_string())
     }
 
     async fn text(&self) -> &str {
@@ -27,7 +37,7 @@ impl Message {
     }
 
     async fn user(&self, ctx: &Context<'_>) -> Result<User> {
-        let usecase = &ctx.data_unchecked::<Storage>().lock().await.usecase;
+        let usecase = &ctx.data_unchecked::<Storage>().usecase;
 
         let user = usecase.get_user(self.user_id).map_err(|x| x)?;
         Ok(User {
@@ -37,25 +47,8 @@ impl Message {
         })
     }
 
-    async fn created_at(&self) -> &str {
-        &self.created_at
-    }
-}
-
-#[derive(Clone)]
-pub struct PagedMessages {
-    pub page_info: MyPageInfo,
-    pub messages: Vec<Message>,
-}
-
-#[Object]
-impl PagedMessages {
-    async fn page_info(&self) -> &MyPageInfo {
-        &self.page_info
-    }
-
-    async fn messages(&self) -> &Vec<Message> {
-        &self.messages
+    async fn created_at(&self) -> String {
+        self.created_at.to_string()
     }
 }
 
@@ -74,7 +67,7 @@ pub struct BookChanged {
 #[derive(Clone)]
 pub struct MessageChanged {
     pub mutation_type: MutationType,
-    pub id: ID,
+    pub id: usize,
 }
 
 #[Object]
@@ -83,13 +76,20 @@ impl MessageChanged {
         self.mutation_type
     }
 
-    async fn id(&self) -> &ID {
-        &self.id
+    async fn id(&self) -> ID {
+        ID(self.id.to_string())
     }
 
-    async fn message(&self, ctx: &Context<'_>) -> Result<Option<Message>> {
-        let messages = &ctx.data_unchecked::<Storage>().lock().await.messages;
-        let id = self.id.parse::<usize>()? - 1;
-        Ok(messages.get(id).cloned())
+    async fn message(&self, ctx: &Context<'_>) -> Result<Message> {
+        let usecase = &ctx.data_unchecked::<Storage>().usecase;
+        usecase
+            .get_message(self.id)
+            .map(|message| Message {
+                id: message.id,
+                text: message.text,
+                user_id: message.user_id,
+                created_at: message.created_at,
+            })
+            .map_err(|x| x.into())
     }
 }

@@ -1,29 +1,15 @@
-#[macro_use]
-extern crate diesel;
-extern crate dotenv;
-
-mod auth;
-mod db;
-mod domain;
-mod infra;
-mod schema;
-mod simple_broker;
-mod usecases;
-
 use std::sync::Arc;
 
 use actix_cors::Cors;
 use actix_web::{guard, http, web, App, HttpRequest, HttpResponse, HttpServer, Result};
+use alp::auth::Authorize;
+use alp::db::new_pool;
+use alp::repository::Repository;
+use alp::schema::{self, new_schema, MySchema};
+use alp::usecases::Usecase;
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::Schema;
 use async_graphql_actix_web::{Request, Response, WSSubscription};
-use schema::MySchema;
-
-use crate::auth::Authorize;
-use crate::db::new_pool;
-use crate::infra::Repository;
-use crate::schema::new_schema;
-use crate::usecases::Usecase;
 
 async fn index(schema: web::Data<MySchema>, req: HttpRequest, gql_req: Request) -> Response {
     let token = req
