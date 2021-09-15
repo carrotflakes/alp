@@ -31,4 +31,5 @@ pub enum MutationType {
 pub struct MessageChanged {
     pub mutation_type: MutationType,
     pub id: usize,
+    pub room_id: usize,
 }

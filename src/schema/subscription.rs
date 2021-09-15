@@ -3,7 +3,7 @@ use super::{
     Storage,
 };
 use crate::schema::varify_token;
-use async_graphql::{Context, Subscription};
+use async_graphql::{Context, ID, Subscription};
 use futures::{Stream, StreamExt};
 use std::time::Duration;
 
@@ -26,8 +26,10 @@ impl SubscriptionRoot {
         &self,
         ctx: &Context<'_>,
         mutation_type: Option<MutationType>,
+        room_id: ID,
     ) -> async_graphql::Result<impl Stream<Item = MessageChanged>> {
-        let uid = varify_token(ctx)?;
+        let room_id = room_id.parse().unwrap();
+        let _uid = varify_token(ctx)?;
 
         let usecase = &ctx.data_unchecked::<Storage>().usecase;
         let mutation_type = match mutation_type {
@@ -37,7 +39,7 @@ impl SubscriptionRoot {
         };
 
         Ok(usecase
-            .subscribe_messages(mutation_type)
+            .subscribe_messages(mutation_type, room_id)
             .map(|event| MessageChanged {
                 mutation_type: match event.mutation_type {
                     crate::domain::MutationType::Created => MutationType::Created,

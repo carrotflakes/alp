@@ -1,7 +1,7 @@
 use super::objects::{Message, User};
 use crate::schema::{varify_token, Storage};
 use async_graphql::connection::{Connection, Edge, EmptyFields};
-use async_graphql::{Context, Object, Result};
+use async_graphql::{Context, Object, Result, ID};
 
 pub struct QueryRoot;
 
@@ -16,11 +16,13 @@ impl QueryRoot {
     async fn messages(
         &self,
         ctx: &Context<'_>,
+        room_id: ID,
         after: Option<String>,
         before: Option<String>,
         first: Option<i32>,
         last: Option<i32>,
     ) -> Result<Connection<String, Message, EmptyFields, EmptyFields>> {
+        let room_id = room_id.parse().unwrap();
         async_graphql::connection::query(
             after,
             before,
@@ -29,7 +31,7 @@ impl QueryRoot {
             |after: Option<String>, before, first, last| async move {
                 let usecase = &ctx.data_unchecked::<Storage>().usecase;
                 let (messages, has_prev, has_next) =
-                    usecase.get_messages(after, before, first, last)?;
+                    usecase.get_messages(room_id, after, before, first, last)?;
                 let mut connection = Connection::new(has_prev, has_next);
                 connection.append(messages.into_iter().map(|message| {
                     let message: Message = message.into();

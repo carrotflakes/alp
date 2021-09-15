@@ -5,7 +5,7 @@ use diesel::prelude::*;
 use std::sync::Arc;
 
 use crate::db::{
-    schema::{messages, users, rooms},
+    schema::{messages, rooms, user_rooms, users},
     PgPool, PgPooled,
 };
 use insert::*;
@@ -71,7 +71,11 @@ impl Repository {
     }
 
     pub fn add_message(&self, user_id: i32, room_id: i32, text: &str) -> Result<Message> {
-        let new_message = NewMessage { user_id, room_id, text };
+        let new_message = NewMessage {
+            user_id,
+            room_id,
+            text,
+        };
 
         diesel::insert_into(messages::table)
             .values(&new_message)
@@ -93,16 +97,18 @@ impl Repository {
             .map_err(err)
     }
 
-    pub fn get_messages_gt_id(&self, id: i32, limit: i64) -> Result<Vec<Message>> {
+    pub fn get_messages_gt_id(&self, room_id: i32, id: i32, limit: i64) -> Result<Vec<Message>> {
         messages::dsl::messages
+            .filter(messages::dsl::room_id.eq(room_id))
             .filter(messages::dsl::id.gt(id))
             .limit(limit)
             .get_results(&self.get_conn()?)
             .map_err(err)
     }
 
-    pub fn get_messages_lt_id(&self, id: i32, limit: i64) -> Result<Vec<Message>> {
+    pub fn get_messages_lt_id(&self, room_id: i32, id: i32, limit: i64) -> Result<Vec<Message>> {
         messages::dsl::messages
+            .filter(messages::dsl::room_id.eq(room_id))
             .filter(messages::dsl::id.lt(id))
             .order(messages::dsl::id.desc())
             .limit(limit)
@@ -118,6 +124,46 @@ impl Repository {
         rooms::dsl::rooms
             .find(id)
             .first::<Room>(&self.get_conn()?)
+            .map_err(err)
+    }
+
+    pub fn create_room(&self, code: &str) -> Result<Room> {
+        let new_room = NewRoom { code };
+
+        diesel::insert_into(rooms::table)
+            .values(&new_room)
+            .get_result(&self.get_conn()?)
+            .map_err(err)
+    }
+
+    pub fn get_rooms_by_user_id(&self, user_id: i32) -> Result<Vec<Room>> {
+        user_rooms::dsl::user_rooms
+            .filter(user_rooms::dsl::user_id.eq(user_id))
+            .inner_join(rooms::dsl::rooms)
+            .select(rooms::all_columns)
+            .get_results(&self.get_conn()?)
+            .map_err(err)
+    }
+
+    pub fn add_user_room(&self, user_id: i32, room_id: i32) -> Result<usize> {
+        let new_user_room = NewUserRoom { user_id, room_id };
+
+        diesel::insert_into(user_rooms::table)
+            .values(&new_user_room)
+            .execute(&self.get_conn()?)
+            .map_err(err)
+    }
+
+    pub fn find_user_room(&self, user_id: i32, room_id: i32) -> Result<bool> {
+        user_rooms::dsl::user_rooms
+            .filter(
+                user_rooms::dsl::user_id
+                    .eq(user_id)
+                    .and(user_rooms::dsl::room_id.eq(room_id)),
+            )
+            .count()
+            .get_result(&self.get_conn()?)
+            .map(|count: i64| count == 1)
             .map_err(err)
     }
 }

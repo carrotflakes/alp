@@ -3,10 +3,10 @@ import 'tailwindcss/tailwind.css';
 import { MyMessageFragment } from "../../generated/graphql";
 import { useMessages } from "./useMessages";
 
-type props = { width: number, height: number }
+type props = { roomId: string, width: number, height: number }
 
-export const ChatView: FC<props> = ({ width, height }) => {
-  const mes = useMessages()
+export const ChatView: FC<props> = ({ roomId, width, height }) => {
+  const mes = useMessages(roomId)
 
   const containerRef = useRef<HTMLDivElement | null>(null)
 

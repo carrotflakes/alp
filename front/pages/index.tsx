@@ -8,6 +8,8 @@ import { useCreateUserMutation, useMeQuery, usePostMessageMutation } from "../ge
 import styles from '../styles/Home.module.css'
 
 export default function Home() {
+  const [roomId, setRoomId] = useState("1")
+
   const { currentUser } = useContext(AuthContext)
 
   const meRes = useMeQuery()
@@ -24,7 +26,7 @@ export default function Home() {
   const post = useCallback(() => {
     if (meRes.data) {
       postMessage({
-        variables: { text: inputText },
+        variables: { roomId, text: inputText },
         optimisticResponse: {
           postMessage: {
             id: 'temp-id',
@@ -37,7 +39,7 @@ export default function Home() {
       })
       setInputText("")
     }
-  }, [inputText, postMessage])
+  }, [roomId, inputText, postMessage])
 
   useEffect(() => {
     if (currentUser && meRes.error?.message === 'user not found') {
@@ -64,7 +66,11 @@ export default function Home() {
             <div>please <Link href="/signin">sign in</Link></div>
         }
 
-        <ChatView width={400} height={400}></ChatView>
+        <div>
+          rooms: {meRes.data?.me.rooms.map(room => <div onClick={() => setRoomId(room.id)} key={room.id}>{room.code}</div>)}
+        </div>
+
+        <ChatView roomId={roomId} width={400} height={400}></ChatView>
         <div className="w-[400px]">
           <input
             className="border-black border-2"

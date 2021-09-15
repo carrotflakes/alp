@@ -17,62 +17,59 @@ export type Scalars = {
 
 export type IntConnection = {
   __typename?: 'IntConnection';
-  /** Information to aid in pagination. */
-  pageInfo: PageInfo;
   /** A list of edges. */
   edges?: Maybe<Array<Maybe<IntEdge>>>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
 };
 
 /** An edge in a connection. */
 export type IntEdge = {
   __typename?: 'IntEdge';
-  /** The item at the end of the edge */
-  node: Scalars['Int'];
   /** A cursor for use in pagination */
   cursor: Scalars['String'];
+  /** The item at the end of the edge */
+  node: Scalars['Int'];
 };
 
 export type Message = {
   __typename?: 'Message';
-  id: Scalars['String'];
+  createdAt: Scalars['String'];
+  id: Scalars['ID'];
+  room: Room;
   text: Scalars['String'];
   user: User;
-  createdAt: Scalars['String'];
 };
 
 export type MessageChanged = {
   __typename?: 'MessageChanged';
-  mutationType: MutationType;
   id: Scalars['ID'];
-  message?: Maybe<Message>;
+  message: Message;
+  mutationType: MutationType;
 };
 
 export type MessageConnection = {
   __typename?: 'MessageConnection';
-  /** Information to aid in pagination. */
-  pageInfo: PageInfo;
   /** A list of edges. */
   edges?: Maybe<Array<Maybe<MessageEdge>>>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
 };
 
 /** An edge in a connection. */
 export type MessageEdge = {
   __typename?: 'MessageEdge';
-  /** The item at the end of the edge */
-  node: Message;
   /** A cursor for use in pagination */
   cursor: Scalars['String'];
+  /** The item at the end of the edge */
+  node: Message;
 };
 
 export type MutationRoot = {
   __typename?: 'MutationRoot';
-  postMessage: Message;
   createUser: User;
-};
-
-
-export type MutationRootPostMessageArgs = {
-  text: Scalars['String'];
+  joinToRoom: Scalars['Boolean'];
+  postMessage: Message;
 };
 
 
@@ -80,59 +77,42 @@ export type MutationRootCreateUserArgs = {
   name: Scalars['String'];
 };
 
+
+export type MutationRootJoinToRoomArgs = {
+  roomId: Scalars['ID'];
+  userId: Scalars['ID'];
+};
+
+
+export type MutationRootPostMessageArgs = {
+  roomId: Scalars['ID'];
+  text: Scalars['String'];
+};
+
 export enum MutationType {
   Created = 'CREATED',
   Deleted = 'DELETED'
 }
 
-export type MyPageInfo = {
-  __typename?: 'MyPageInfo';
-  startCursor: Scalars['ID'];
-  endCursor: Scalars['ID'];
-  hasPrev: Scalars['Boolean'];
-  hasNext: Scalars['Boolean'];
-};
-
 /** Information about pagination in a connection */
 export type PageInfo = {
   __typename?: 'PageInfo';
-  /** When paginating backwards, are there more items? */
-  hasPreviousPage: Scalars['Boolean'];
-  /** When paginating forwards, are there more items? */
-  hasNextPage: Scalars['Boolean'];
-  /** When paginating backwards, the cursor to continue. */
-  startCursor?: Maybe<Scalars['String']>;
   /** When paginating forwards, the cursor to continue. */
   endCursor?: Maybe<Scalars['String']>;
-};
-
-export type PagedMessages = {
-  __typename?: 'PagedMessages';
-  pageInfo: MyPageInfo;
-  messages: Array<Message>;
-};
-
-export type PagingInput = {
-  first?: Maybe<Scalars['Int']>;
-  last?: Maybe<Scalars['Int']>;
-  before?: Maybe<Scalars['ID']>;
-  after?: Maybe<Scalars['ID']>;
+  /** When paginating forwards, are there more items? */
+  hasNextPage: Scalars['Boolean'];
+  /** When paginating backwards, are there more items? */
+  hasPreviousPage: Scalars['Boolean'];
+  /** When paginating backwards, the cursor to continue. */
+  startCursor?: Maybe<Scalars['String']>;
 };
 
 export type QueryRoot = {
   __typename?: 'QueryRoot';
-  allMessages: Array<Message>;
   allUsers: Array<User>;
-  messagesOld: PagedMessages;
-  messages: MessageConnection;
-  session?: Maybe<Scalars['String']>;
   me: User;
+  messages: MessageConnection;
   numbers: IntConnection;
-};
-
-
-export type QueryRootMessagesOldArgs = {
-  paging: PagingInput;
 };
 
 
@@ -141,10 +121,26 @@ export type QueryRootMessagesArgs = {
   before?: Maybe<Scalars['String']>;
   first?: Maybe<Scalars['Int']>;
   last?: Maybe<Scalars['Int']>;
+  roomId: Scalars['ID'];
 };
 
 
 export type QueryRootNumbersArgs = {
+  after?: Maybe<Scalars['String']>;
+  before?: Maybe<Scalars['String']>;
+  first?: Maybe<Scalars['Int']>;
+  last?: Maybe<Scalars['Int']>;
+};
+
+export type Room = {
+  __typename?: 'Room';
+  code: Scalars['String'];
+  id: Scalars['ID'];
+  messages: MessageConnection;
+};
+
+
+export type RoomMessagesArgs = {
   after?: Maybe<Scalars['String']>;
   before?: Maybe<Scalars['String']>;
   first?: Maybe<Scalars['Int']>;
@@ -165,13 +161,21 @@ export type SubscriptionRootIntervalArgs = {
 
 export type SubscriptionRootMessagesArgs = {
   mutationType?: Maybe<MutationType>;
+  roomId: Scalars['ID'];
 };
 
 export type User = {
   __typename?: 'User';
   id: Scalars['ID'];
-  uid: Scalars['String'];
   name: Scalars['String'];
+  room: Room;
+  rooms: Array<Room>;
+  uid: Scalars['String'];
+};
+
+
+export type UserRoomArgs = {
+  id: Scalars['ID'];
 };
 
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
@@ -182,6 +186,10 @@ export type MeQuery = (
   & { me: (
     { __typename?: 'User' }
     & Pick<User, 'id' | 'name'>
+    & { rooms: Array<(
+      { __typename?: 'Room' }
+      & Pick<Room, 'id' | 'code'>
+    )> }
   ) }
 );
 
@@ -198,18 +206,8 @@ export type CreateUserMutation = (
   ) }
 );
 
-export type AllMessagesQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type AllMessagesQuery = (
-  { __typename?: 'QueryRoot' }
-  & { allMessages: Array<(
-    { __typename?: 'Message' }
-    & MyMessageFragment
-  )> }
-);
-
 export type MessagesQueryVariables = Exact<{
+  roomId: Scalars['ID'];
   last: Scalars['Int'];
   startCursor?: Maybe<Scalars['String']>;
 }>;
@@ -233,6 +231,7 @@ export type MessagesQuery = (
 );
 
 export type PostMessageMutationVariables = Exact<{
+  roomId: Scalars['ID'];
   text: Scalars['String'];
 }>;
 
@@ -249,17 +248,19 @@ export type PostMessageMutation = (
   ) }
 );
 
-export type MessageAddedSubscriptionVariables = Exact<{ [key: string]: never; }>;
+export type MessageAddedSubscriptionVariables = Exact<{
+  roomId: Scalars['ID'];
+}>;
 
 
 export type MessageAddedSubscription = (
   { __typename?: 'SubscriptionRoot' }
   & { messages: (
     { __typename?: 'MessageChanged' }
-    & { message?: Maybe<(
+    & { message: (
       { __typename?: 'Message' }
       & MyMessageFragment
-    )> }
+    ) }
   ) }
 );
 
@@ -287,6 +288,10 @@ export const MeDocument = gql`
   me {
     id
     name
+    rooms {
+      id
+      code
+    }
   }
 }
     `;
@@ -352,43 +357,9 @@ export function useCreateUserMutation(baseOptions?: Apollo.MutationHookOptions<C
 export type CreateUserMutationHookResult = ReturnType<typeof useCreateUserMutation>;
 export type CreateUserMutationResult = Apollo.MutationResult<CreateUserMutation>;
 export type CreateUserMutationOptions = Apollo.BaseMutationOptions<CreateUserMutation, CreateUserMutationVariables>;
-export const AllMessagesDocument = gql`
-    query allMessages {
-  allMessages {
-    ...MyMessage
-  }
-}
-    ${MyMessageFragmentDoc}`;
-
-/**
- * __useAllMessagesQuery__
- *
- * To run a query within a React component, call `useAllMessagesQuery` and pass it any options that fit your needs.
- * When your component renders, `useAllMessagesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useAllMessagesQuery({
- *   variables: {
- *   },
- * });
- */
-export function useAllMessagesQuery(baseOptions?: Apollo.QueryHookOptions<AllMessagesQuery, AllMessagesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<AllMessagesQuery, AllMessagesQueryVariables>(AllMessagesDocument, options);
-      }
-export function useAllMessagesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<AllMessagesQuery, AllMessagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<AllMessagesQuery, AllMessagesQueryVariables>(AllMessagesDocument, options);
-        }
-export type AllMessagesQueryHookResult = ReturnType<typeof useAllMessagesQuery>;
-export type AllMessagesLazyQueryHookResult = ReturnType<typeof useAllMessagesLazyQuery>;
-export type AllMessagesQueryResult = Apollo.QueryResult<AllMessagesQuery, AllMessagesQueryVariables>;
 export const MessagesDocument = gql`
-    query messages($last: Int!, $startCursor: String) {
-  messages(last: $last, before: $startCursor) {
+    query messages($roomId: ID!, $last: Int!, $startCursor: String) {
+  messages(roomId: $roomId, last: $last, before: $startCursor) {
     pageInfo {
       startCursor
       endCursor
@@ -416,6 +387,7 @@ export const MessagesDocument = gql`
  * @example
  * const { data, loading, error } = useMessagesQuery({
  *   variables: {
+ *      roomId: // value for 'roomId'
  *      last: // value for 'last'
  *      startCursor: // value for 'startCursor'
  *   },
@@ -433,8 +405,8 @@ export type MessagesQueryHookResult = ReturnType<typeof useMessagesQuery>;
 export type MessagesLazyQueryHookResult = ReturnType<typeof useMessagesLazyQuery>;
 export type MessagesQueryResult = Apollo.QueryResult<MessagesQuery, MessagesQueryVariables>;
 export const PostMessageDocument = gql`
-    mutation postMessage($text: String!) {
-  postMessage(text: $text) {
+    mutation postMessage($roomId: ID!, $text: String!) {
+  postMessage(roomId: $roomId, text: $text) {
     id
     text
     user {
@@ -460,6 +432,7 @@ export type PostMessageMutationFn = Apollo.MutationFunction<PostMessageMutation,
  * @example
  * const [postMessageMutation, { data, loading, error }] = usePostMessageMutation({
  *   variables: {
+ *      roomId: // value for 'roomId'
  *      text: // value for 'text'
  *   },
  * });
@@ -472,8 +445,8 @@ export type PostMessageMutationHookResult = ReturnType<typeof usePostMessageMuta
 export type PostMessageMutationResult = Apollo.MutationResult<PostMessageMutation>;
 export type PostMessageMutationOptions = Apollo.BaseMutationOptions<PostMessageMutation, PostMessageMutationVariables>;
 export const MessageAddedDocument = gql`
-    subscription messageAdded {
-  messages(mutationType: CREATED) {
+    subscription messageAdded($roomId: ID!) {
+  messages(mutationType: CREATED, roomId: $roomId) {
     message {
       ...MyMessage
     }
@@ -493,10 +466,11 @@ export const MessageAddedDocument = gql`
  * @example
  * const { data, loading, error } = useMessageAddedSubscription({
  *   variables: {
+ *      roomId: // value for 'roomId'
  *   },
  * });
  */
-export function useMessageAddedSubscription(baseOptions?: Apollo.SubscriptionHookOptions<MessageAddedSubscription, MessageAddedSubscriptionVariables>) {
+export function useMessageAddedSubscription(baseOptions: Apollo.SubscriptionHookOptions<MessageAddedSubscription, MessageAddedSubscriptionVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useSubscription<MessageAddedSubscription, MessageAddedSubscriptionVariables>(MessageAddedDocument, options);
       }

@@ -1,3 +1,5 @@
+mod pagenation;
+
 use std::sync::Arc;
 
 use crate::{
@@ -10,7 +12,7 @@ use futures::{Stream, StreamExt};
 pub type Result<T> = std::result::Result<T, String>;
 
 pub struct Usecase {
-    repository: Arc<Repository>,
+    pub(crate) repository: Arc<Repository>,
 }
 
 impl Usecase {
@@ -60,11 +62,15 @@ impl Usecase {
     }
 
     pub fn add_message(&self, user_id: usize, room_id: usize, text: &str) -> Result<Message> {
-        match self.repository.add_message(user_id as i32, room_id as i32, text) {
+        match self
+            .repository
+            .add_message(user_id as i32, room_id as i32, text)
+        {
             Ok(m) => {
                 SimpleBroker::publish(MessageChanged {
                     mutation_type: MutationType::Created,
                     id: m.id as usize,
+                    room_id,
                 });
                 Ok(message(m))
             }
@@ -81,64 +87,26 @@ impl Usecase {
 
     pub fn get_messages(
         &self,
+        room_id: usize,
         after: Option<String>,
         before: Option<String>,
         first: Option<usize>,
         last: Option<usize>,
     ) -> Result<(Vec<Message>, bool, bool)> {
-        let (asc, limit, id) = match (first, last) {
-            (None, None) => {
-                return Err(format!("'first' or 'last' required in PagingInput").into());
-            }
-            (Some(_), Some(_)) => {
-                return Err(format!("cannot specify 'first' and 'last' same time").into());
-            }
-            (Some(limit), None) => (true, limit, after),
-            (None, Some(limit)) => (false, limit, before),
-        };
-
-        if limit < 1 {
-            return Err("invalid limit".into());
-        }
-        let limit = limit.min(20) as i64;
-
-        let id = id
-            .map(|x| x.parse().unwrap())
-            .unwrap_or(if asc { 0 } else { i32::MAX });
-
-        let (messages, has_prev, has_next): (Vec<_>, _, _) = if asc {
-            let mut messages = self
-                .repository
-                .get_messages_gt_id(id, limit + 1)
-                .map_err(repo_err)?;
-            let has_next = messages.len() > limit as usize;
-            let has_prev = self
-                .repository
-                .get_messages_lt_id(id, 2)
-                .map_err(repo_err)?
-                .len()
-                == 2;
-            if has_next {
-                messages.pop();
-            }
-            (messages, has_prev, has_next)
-        } else {
-            let mut messages = self
-                .repository
-                .get_messages_lt_id(id, limit + 1)
-                .map_err(repo_err)?;
-            let has_prev = messages.len() > limit as usize;
-            let has_next = self
-                .repository
-                .get_messages_gt_id(id, 2)
-                .map_err(repo_err)?
-                .len()
-                == 2;
-            if has_prev {
-                messages.remove(0);
-            }
-            (messages, has_prev, has_next)
-        };
+        let (messages, has_prev, has_next) = pagenation::pagenation(
+            &mut |id, limit| {
+                self.repository
+                    .get_messages_gt_id(room_id as i32, id, limit)
+            },
+            &mut |id, limit| {
+                self.repository
+                    .get_messages_lt_id(room_id as i32, id, limit)
+            },
+            after,
+            before,
+            first,
+            last,
+        )?;
         let messages = messages.into_iter().map(message).collect();
         Ok((messages, has_prev, has_next))
     }
@@ -146,10 +114,12 @@ impl Usecase {
     pub fn subscribe_messages(
         &self,
         mutation_type: Option<MutationType>,
+        room_id: usize,
     ) -> impl Stream<Item = MessageChanged> {
         SimpleBroker::<MessageChanged>::subscribe().filter_map(move |event| {
             let res = match mutation_type {
                 Some(mt) if mt != event.mutation_type => None,
+                _ if room_id != event.room_id => None,
                 _ => Some(event),
             };
             async move { res }
@@ -160,6 +130,43 @@ impl Usecase {
         self.repository
             .get_room(id as i32)
             .map(room)
+            .map_err(|x| x.to_string())
+    }
+
+    pub fn create_room(&self, uid: &str, code: &str) -> Result<Room> {
+        if let Some(user) = self.find_user_by_uid(uid)? {
+            let room = self
+                .repository
+                .create_room(code)
+                .map(room)
+                .map_err(|x| x.to_string())?;
+            dbg!((user.id, room.id));
+            self.repository
+                .add_user_room(user.id as i32, room.id as i32)
+                .map_err(|x| x.to_string())?;
+            Ok(room)
+        } else {
+            Err(format!("permission denied"))
+        }
+    }
+
+    pub fn get_rooms_by_user_id(&self, user_id: usize) -> Result<Vec<Room>> {
+        self.repository
+            .get_rooms_by_user_id(user_id as i32)
+            .map(|rooms| rooms.into_iter().map(room).collect())
+            .map_err(|x| x.to_string())
+    }
+
+    pub fn join_to_room(&self, user_id: usize, room_id: usize) -> Result<()> {
+        self.repository
+            .add_user_room(user_id as i32, room_id as i32)
+            .map(|_| ())
+            .map_err(|x| x.to_string())
+    }
+
+    pub fn find_user_room(&self, user_id: usize, room_id: usize) -> Result<bool> {
+        self.repository
+            .find_user_room(user_id as i32, room_id as i32)
             .map_err(|x| x.to_string())
     }
 }
