@@ -13,4 +13,12 @@ pub struct Message {
     pub user_id: i32,
     pub text: String,
     pub created_at: NaiveDateTime,
+    pub room_id: i32,
+}
+
+#[derive(Queryable)]
+pub struct Room {
+    pub id: i32,
+    pub code: String,
+    pub created_at: NaiveDateTime,
 }

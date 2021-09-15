@@ -9,6 +9,13 @@ relies:
 - Firebase Authentication
 - PostgreSQL
 
+## TODO
+
+- error handling
+- transaction
+- scalable
+- test
+
 ## Usage
 
 ```sh
@@ -21,6 +28,7 @@ Then open localhost:3000 in your browser.
 
 ``` sh
 $ cargo install diesel_cli --no-default-features --features postgres
+$ diesel migration generate <migration_name>
 ```
 
 ## Author

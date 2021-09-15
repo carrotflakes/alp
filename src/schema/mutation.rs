@@ -15,7 +15,7 @@ impl MutationRoot {
 
         let usecase = &ctx.data_unchecked::<Storage>().usecase;
         usecase
-            .post_message(uid.0.as_str(), &text)
+            .post_message(uid.0.as_str(), 1, &text) // TODO
             .map(|message| message.into())
             .map_err(|x| x.into())
     }

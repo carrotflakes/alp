@@ -11,5 +11,6 @@ pub struct NewUser<'a> {
 #[table_name = "messages"]
 pub struct NewMessage<'a> {
     pub user_id: i32,
+    pub room_id: i32,
     pub text: &'a str,
 }

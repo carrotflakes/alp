@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::{
-    domain::{Message, MessageChanged, MutationType, User},
+    domain::{Message, MessageChanged, MutationType, Room, User},
     repository::Repository,
     simple_broker::SimpleBroker,
 };
@@ -50,17 +50,17 @@ impl Usecase {
             .map_err(|x| x.to_string())
     }
 
-    pub fn post_message(&self, uid: &str, text: &str) -> Result<Message> {
+    pub fn post_message(&self, uid: &str, room_id: usize, text: &str) -> Result<Message> {
         let user = self.find_user_by_uid(uid)?;
         if let Some(user) = user {
-            self.add_message(user.id, text)
+            self.add_message(user.id, room_id, text)
         } else {
             Err(format!("user not found"))
         }
     }
 
-    pub fn add_message(&self, user_id: usize, text: &str) -> Result<Message> {
-        match self.repository.add_message(user_id as i32, text) {
+    pub fn add_message(&self, user_id: usize, room_id: usize, text: &str) -> Result<Message> {
+        match self.repository.add_message(user_id as i32, room_id as i32, text) {
             Ok(m) => {
                 SimpleBroker::publish(MessageChanged {
                     mutation_type: MutationType::Created,
@@ -155,6 +155,13 @@ impl Usecase {
             async move { res }
         })
     }
+
+    pub fn get_room(&self, id: usize) -> Result<Room> {
+        self.repository
+            .get_room(id as i32)
+            .map(room)
+            .map_err(|x| x.to_string())
+    }
 }
 
 pub fn user(user: crate::repository::User) -> User {
@@ -169,8 +176,16 @@ pub fn message(message: crate::repository::Message) -> Message {
     Message {
         id: message.id as usize,
         user_id: message.user_id as usize,
+        room_id: message.room_id as usize,
         text: message.text,
         created_at: message.created_at,
+    }
+}
+
+pub fn room(room: crate::repository::Room) -> Room {
+    Room {
+        id: room.id as usize,
+        code: room.code,
     }
 }
 

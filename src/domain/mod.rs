@@ -11,8 +11,14 @@ pub struct User {
 pub struct Message {
     pub id: usize,
     pub user_id: usize,
+    pub room_id: usize,
     pub text: String,
     pub created_at: DateTime,
+}
+
+pub struct Room {
+    pub id: usize,
+    pub code: String,
 }
 
 #[derive(Eq, PartialEq, Clone, Copy)]

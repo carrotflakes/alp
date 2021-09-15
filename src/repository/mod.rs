@@ -5,7 +5,7 @@ use diesel::prelude::*;
 use std::sync::Arc;
 
 use crate::db::{
-    schema::{messages, users},
+    schema::{messages, users, rooms},
     PgPool, PgPooled,
 };
 use insert::*;
@@ -70,8 +70,8 @@ impl Repository {
             .map_err(err)
     }
 
-    pub fn add_message(&self, user_id: i32, text: &str) -> Result<Message> {
-        let new_message = NewMessage { user_id, text };
+    pub fn add_message(&self, user_id: i32, room_id: i32, text: &str) -> Result<Message> {
+        let new_message = NewMessage { user_id, room_id, text };
 
         diesel::insert_into(messages::table)
             .values(&new_message)
@@ -111,6 +111,13 @@ impl Repository {
                 messages.reverse();
                 messages
             })
+            .map_err(err)
+    }
+
+    pub fn get_room(&self, id: i32) -> Result<Room> {
+        rooms::dsl::rooms
+            .find(id)
+            .first::<Room>(&self.get_conn()?)
             .map_err(err)
     }
 }
