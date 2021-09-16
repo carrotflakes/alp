@@ -1,6 +1,6 @@
 use crate::schema::res;
 
-use super::{room::Room, Storage};
+use super::{Storage, role::Role, room::Room, workspace::WorkspaceWithRole};
 use async_graphql::{ComplexObject, Context, Result, SimpleObject, ID};
 
 #[derive(Clone, SimpleObject)]
@@ -39,6 +39,19 @@ impl User {
             .map(|rooms| rooms.into_iter().map(|x| x.into()).collect())
             .map_err(|x| x.into())
     }
+
+    async fn workspaces(&self, ctx: &Context<'_>) -> Result<Vec<WorkspaceWithRole>> {
+        let usecase = &ctx.data_unchecked::<Storage>().usecase;
+        usecase
+            .get_workspaces_by_user_id(self.id)
+            .map(|workspaces| {
+                workspaces
+                    .into_iter()
+                    .map(WorkspaceWithRole::from)
+                    .collect()
+            })
+            .map_err(|x| x.into())
+    }
 }
 
 impl From<crate::domain::User> for User {
@@ -50,3 +63,19 @@ impl From<crate::domain::User> for User {
         }
     }
 }
+
+#[derive(Clone, SimpleObject)]
+pub struct UserWithRole {
+    pub user: User,
+    pub role: Role,
+}
+
+impl From<(crate::domain::User, crate::domain::Role)> for UserWithRole {
+    fn from((user, role): (crate::domain::User, crate::domain::Role)) -> Self {
+        UserWithRole {
+            user: user.into(),
+            role: role.into(),
+        }
+    }
+}
+

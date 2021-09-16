@@ -4,9 +4,12 @@ mod query;
 use diesel::prelude::*;
 use std::sync::Arc;
 
-use crate::db::{
-    schema::{messages, rooms, user_rooms, users},
-    PgPool, PgPooled,
+use crate::{
+    db::{
+        schema::{messages, rooms, user_rooms, users, workspace_users, workspaces},
+        PgPool, PgPooled,
+    },
+    domain::Role,
 };
 use insert::*;
 pub use query::*;
@@ -127,8 +130,8 @@ impl Repository {
             .map_err(err)
     }
 
-    pub fn create_room(&self, code: &str) -> Result<Room> {
-        let new_room = NewRoom { code };
+    pub fn create_room(&self, workspace_id: i32, code: &str) -> Result<Room> {
+        let new_room = NewRoom { workspace_id, code };
 
         diesel::insert_into(rooms::table)
             .values(&new_room)
@@ -154,6 +157,31 @@ impl Repository {
             .map_err(err)
     }
 
+    pub fn create_workspace(&self, code: &str) -> Result<Workspace> {
+        let new_workspace = NewWorkspace { code };
+
+        diesel::insert_into(workspaces::table)
+            .values(&new_workspace)
+            .get_result(&self.get_conn()?)
+            .map_err(err)
+    }
+
+    pub fn add_user_workspace(&self, user_id: i32, workspace_id: i32, role: Role) -> Result<usize> {
+        let new_user_workspace = NewWorkspaceUser {
+            user_id,
+            workspace_id,
+            role: match role {
+                Role::Member => "member",
+                Role::Admin => "admin",
+            },
+        };
+
+        diesel::insert_into(workspace_users::table)
+            .values(&new_user_workspace)
+            .execute(&self.get_conn()?)
+            .map_err(err)
+    }
+
     pub fn find_user_room(&self, user_id: i32, room_id: i32) -> Result<bool> {
         user_rooms::dsl::user_rooms
             .filter(
@@ -164,6 +192,31 @@ impl Repository {
             .count()
             .get_result(&self.get_conn()?)
             .map(|count: i64| count == 1)
+            .map_err(err)
+    }
+
+    pub fn get_workspaces_by_user_id(&self, user_id: i32) -> Result<Vec<WorkspaceWithRole>> {
+        workspace_users::dsl::workspace_users
+            .filter(workspace_users::dsl::user_id.eq(user_id))
+            .inner_join(workspaces::dsl::workspaces)
+            .select((workspaces::all_columns, workspace_users::dsl::role))
+            .get_results(&self.get_conn()?)
+            .map_err(err)
+    }
+
+    pub fn get_users_by_workspace_id(&self, workspace_id: i32) -> Result<Vec<UserWithRole>> {
+        workspace_users::dsl::workspace_users
+            .filter(workspace_users::dsl::workspace_id.eq(workspace_id))
+            .inner_join(users::dsl::users)
+            .select((users::all_columns, workspace_users::dsl::role))
+            .get_results(&self.get_conn()?)
+            .map_err(err)
+    }
+
+    pub fn get_rooms_by_workspace_id(&self, workspace_id: i32) -> Result<Vec<Room>> {
+        rooms::dsl::rooms
+            .filter(rooms::dsl::workspace_id.eq(workspace_id))
+            .get_results(&self.get_conn()?)
             .map_err(err)
     }
 }

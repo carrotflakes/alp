@@ -21,4 +21,24 @@ pub struct Room {
     pub id: i32,
     pub code: String,
     pub created_at: NaiveDateTime,
+    pub workspace_id: i32,
+}
+
+#[derive(Queryable)]
+pub struct Workspace {
+    pub id: i32,
+    pub code: String,
+    pub created_at: NaiveDateTime,
+}
+
+#[derive(Queryable)]
+pub struct WorkspaceWithRole {
+    pub workspace: Workspace,
+    pub role: String,
+}
+
+#[derive(Queryable)]
+pub struct UserWithRole {
+    pub user: User,
+    pub role: String,
 }

@@ -67,9 +67,18 @@ export type MessageEdge = {
 
 export type MutationRoot = {
   __typename?: 'MutationRoot';
+  createRoom: Room;
   createUser: User;
+  createWorkspace: Workspace;
   joinToRoom: Scalars['Boolean'];
+  joinToWorkspace: Scalars['Boolean'];
   postMessage: Message;
+};
+
+
+export type MutationRootCreateRoomArgs = {
+  code: Scalars['String'];
+  workspaceId: Scalars['ID'];
 };
 
 
@@ -78,9 +87,21 @@ export type MutationRootCreateUserArgs = {
 };
 
 
+export type MutationRootCreateWorkspaceArgs = {
+  code: Scalars['String'];
+};
+
+
 export type MutationRootJoinToRoomArgs = {
   roomId: Scalars['ID'];
   userId: Scalars['ID'];
+};
+
+
+export type MutationRootJoinToWorkspaceArgs = {
+  role: Role;
+  userId: Scalars['ID'];
+  workspaceId: Scalars['ID'];
 };
 
 
@@ -132,6 +153,11 @@ export type QueryRootNumbersArgs = {
   last?: Maybe<Scalars['Int']>;
 };
 
+export enum Role {
+  Admin = 'ADMIN',
+  Member = 'MEMBER'
+}
+
 export type Room = {
   __typename?: 'Room';
   code: Scalars['String'];
@@ -171,11 +197,33 @@ export type User = {
   room: Room;
   rooms: Array<Room>;
   uid: Scalars['String'];
+  workspaces: Array<WorkspaceWithRole>;
 };
 
 
 export type UserRoomArgs = {
   id: Scalars['ID'];
+};
+
+export type UserWithRole = {
+  __typename?: 'UserWithRole';
+  role: Role;
+  user: User;
+};
+
+export type Workspace = {
+  __typename?: 'Workspace';
+  code: Scalars['String'];
+  createdAt: Scalars['String'];
+  id: Scalars['ID'];
+  rooms: Array<Room>;
+  users: Array<UserWithRole>;
+};
+
+export type WorkspaceWithRole = {
+  __typename?: 'WorkspaceWithRole';
+  role: Role;
+  workspace: Workspace;
 };
 
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
@@ -189,6 +237,24 @@ export type MeQuery = (
     & { rooms: Array<(
       { __typename?: 'Room' }
       & Pick<Room, 'id' | 'code'>
+    )>, workspaces: Array<(
+      { __typename?: 'WorkspaceWithRole' }
+      & Pick<WorkspaceWithRole, 'role'>
+      & { workspace: (
+        { __typename?: 'Workspace' }
+        & Pick<Workspace, 'id' | 'code'>
+        & { rooms: Array<(
+          { __typename?: 'Room' }
+          & Pick<Room, 'id' | 'code'>
+        )>, users: Array<(
+          { __typename?: 'UserWithRole' }
+          & Pick<UserWithRole, 'role'>
+          & { user: (
+            { __typename?: 'User' }
+            & Pick<User, 'id' | 'name'>
+          ) }
+        )> }
+      ) }
     )> }
   ) }
 );
@@ -291,6 +357,24 @@ export const MeDocument = gql`
     rooms {
       id
       code
+    }
+    workspaces {
+      role
+      workspace {
+        id
+        code
+        rooms {
+          id
+          code
+        }
+        users {
+          role
+          user {
+            id
+            name
+          }
+        }
+      }
     }
   }
 }

@@ -6,6 +6,24 @@ query me {
       id
       code
     }
+    workspaces {
+      role
+      workspace {
+        id
+        code
+        rooms {
+          id
+          code
+        }
+        users {
+          role
+          user {
+            id
+            name
+          }
+        }
+      }
+    }
   }
 }
 

@@ -67,7 +67,16 @@ export default function Home() {
         }
 
         <div>
-          rooms: {meRes.data?.me.rooms.map(room => <div onClick={() => setRoomId(room.id)} key={room.id}>{room.code}</div>)}
+          workspaces: {meRes.data?.me.workspaces.map(w =>
+          <div key={w.workspace.id}>
+            {w.workspace.code}
+            {
+              w.workspace.rooms.map(r =>
+                <div onClick={() => setRoomId(r.id)} key={r.id}>
+                  ▶{r.code}
+                </div>)
+            }
+          </div>)}
         </div>
 
         <ChatView roomId={roomId} width={400} height={400}></ChatView>

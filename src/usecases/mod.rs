@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use crate::{
     auth::{Authorize, UID},
-    domain::{Message, MessageChanged, MutationType, Room, User},
+    domain::{Message, MessageChanged, MutationType, Role, Room, User, Workspace},
     repository::Repository,
     simple_broker::SimpleBroker,
 };
@@ -142,11 +142,11 @@ impl Usecase {
             .map_err(|x| x.to_string())
     }
 
-    pub fn create_room(&self, uid: &str, code: &str) -> Result<Room> {
+    pub fn create_room(&self, uid: &str, workspace_id: usize, code: &str) -> Result<Room> {
         if let Some(user) = self.find_user_by_uid(uid)? {
             let room = self
                 .repository
-                .create_room(code)
+                .create_room(workspace_id as i32, code)
                 .map(room)
                 .map_err(|x| x.to_string())?;
             dbg!((user.id, room.id));
@@ -173,9 +173,64 @@ impl Usecase {
             .map_err(|x| x.to_string())
     }
 
+    pub fn join_to_workspace(&self, user_id: usize, workspace_id: usize, role: Role) -> Result<()> {
+        self.repository
+            .add_user_workspace(user_id as i32, workspace_id as i32, role)
+            .map(|_| ())
+            .map_err(|x| x.to_string())
+    }
+
     pub fn find_user_room(&self, user_id: usize, room_id: usize) -> Result<bool> {
         self.repository
             .find_user_room(user_id as i32, room_id as i32)
+            .map_err(|x| x.to_string())
+    }
+
+    pub fn create_workspace(&self, uid: &str, code: &str) -> Result<Workspace> {
+        if let Some(user) = self.find_user_by_uid(uid)? {
+            let workspace = self
+                .repository
+                .create_workspace(code)
+                .map(workspace)
+                .map_err(|x| x.to_string())?;
+            dbg!((user.id, workspace.id));
+            self.repository
+                .add_user_workspace(user.id as i32, workspace.id as i32, Role::Admin)
+                .map_err(|x| x.to_string())?;
+            Ok(workspace)
+        } else {
+            Err(format!("permission denied"))
+        }
+    }
+
+    pub fn get_workspaces_by_user_id(&self, user_id: usize) -> Result<Vec<(Workspace, Role)>> {
+        self.repository
+            .get_workspaces_by_user_id(user_id as i32)
+            .map(|workspaces| {
+                workspaces
+                    .into_iter()
+                    .map(|ws| (workspace(ws.workspace), role(&ws.role)))
+                    .collect()
+            })
+            .map_err(|x| x.to_string())
+    }
+
+    pub fn get_users_by_workspace_id(&self, workspace_id: usize) -> Result<Vec<(User, Role)>> {
+        self.repository
+            .get_users_by_workspace_id(workspace_id as i32)
+            .map(|users| {
+                users
+                    .into_iter()
+                    .map(|u| (user(u.user), role(&u.role)))
+                    .collect()
+            })
+            .map_err(|x| x.to_string())
+    }
+
+    pub fn get_rooms_by_workspace_id(&self, workspace_id: usize) -> Result<Vec<Room>> {
+        self.repository
+            .get_rooms_by_workspace_id(workspace_id as i32)
+            .map(|rooms| rooms.into_iter().map(room).collect())
             .map_err(|x| x.to_string())
     }
 
@@ -219,6 +274,23 @@ pub fn room(room: crate::repository::Room) -> Room {
     Room {
         id: room.id as usize,
         code: room.code,
+        workspace_id: room.workspace_id as usize,
+    }
+}
+
+pub fn workspace(workspace: crate::repository::Workspace) -> Workspace {
+    Workspace {
+        id: workspace.id as usize,
+        code: workspace.code,
+        created_at: workspace.created_at,
+    }
+}
+
+pub fn role(role: &str) -> Role {
+    match role {
+        "member" => Role::Member,
+        "admin" => Role::Admin,
+        _ => panic!("invalid role value: {}", role),
     }
 }
 

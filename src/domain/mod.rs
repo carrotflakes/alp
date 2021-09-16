@@ -19,6 +19,19 @@ pub struct Message {
 pub struct Room {
     pub id: usize,
     pub code: String,
+    pub workspace_id: usize,
+}
+
+pub struct Workspace {
+    pub id: usize,
+    pub code: String,
+    pub created_at: DateTime,
+}
+
+#[derive(Clone, Copy, PartialEq)]
+pub enum Role {
+    Member,
+    Admin,
 }
 
 #[derive(Eq, PartialEq, Clone, Copy)]
