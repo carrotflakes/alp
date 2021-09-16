@@ -1,5 +1,6 @@
+use super::get_context;
 use super::objects::{message::Message, user::User};
-use crate::schema::{varify_token, Storage};
+use crate::schema::{Storage};
 use async_graphql::connection::{Connection, Edge, EmptyFields};
 use async_graphql::{Context, Object, Result, ID};
 
@@ -44,10 +45,11 @@ impl QueryRoot {
     }
 
     async fn me(&self, ctx: &Context<'_>) -> Result<User> {
-        let uid = varify_token(ctx)?;
+        let uctx = get_context(ctx);
+        let usecase = &ctx.data_unchecked::<Storage>().usecase;
+        let uid = usecase.varify_token(&uctx)?;
 
-        let storage = &ctx.data_unchecked::<Storage>();
-        let user = storage.usecase.find_user_by_uid(uid.0.as_str())?;
+        let user = usecase.find_user_by_uid(uid.0.as_str())?;
         if let Some(user) = user {
             Ok(user.into())
         } else {

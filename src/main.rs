@@ -55,8 +55,8 @@ async fn index_ws(
 async fn main() -> std::io::Result<()> {
     let conn = new_pool().unwrap();
     let auth = Authorize::new().await;
-    let usecase = Usecase::new(Arc::new(Repository::new(conn)));
-    let schema = new_schema(auth, usecase);
+    let usecase = Usecase::new(auth, Arc::new(Repository::new(conn)));
+    let schema = new_schema(usecase);
 
     println!("Playground: http://localhost:8000");
 

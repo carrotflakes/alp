@@ -1,7 +1,7 @@
-use super::{Storage, room::Room};
-use async_graphql::{
-    ComplexObject, Context, Result, SimpleObject, ID,
-};
+use crate::schema::res;
+
+use super::{room::Room, Storage};
+use async_graphql::{ComplexObject, Context, Result, SimpleObject, ID};
 
 #[derive(Clone, SimpleObject)]
 #[graphql(complex)]
@@ -26,10 +26,7 @@ impl User {
             .map_err(|x| async_graphql::Error::new(x))?
         // TODO
         {
-            usecase
-                .get_room(room_id)
-                .map(|room| Room::from(room))
-                .map_err(|x| x.into())
+            res(usecase.get_room(room_id))
         } else {
             Err(format!("permission denied").into())
         }

@@ -1,3 +1,5 @@
+use crate::schema::res;
+
 use super::{room::Room, user::User, MutationType, Storage};
 use async_graphql::{Context, Object, Result, ID};
 use chrono::NaiveDateTime;
@@ -23,18 +25,12 @@ impl Message {
 
     async fn user(&self, ctx: &Context<'_>) -> Result<User> {
         let usecase = &ctx.data_unchecked::<Storage>().usecase;
-        usecase
-            .get_user(self.user_id)
-            .map(|user| user.into())
-            .map_err(|x| x.into())
+        res(usecase.get_user(self.user_id))
     }
 
     async fn room(&self, ctx: &Context<'_>) -> Result<Room> {
         let usecase = &ctx.data_unchecked::<Storage>().usecase;
-        usecase
-            .get_room(self.room_id)
-            .map(|room| room.into())
-            .map_err(|x| x.into())
+        res(usecase.get_room(self.room_id))
     }
 
     async fn created_at(&self) -> String {
@@ -72,9 +68,6 @@ impl MessageChanged {
 
     async fn message(&self, ctx: &Context<'_>) -> Result<Message> {
         let usecase = &ctx.data_unchecked::<Storage>().usecase;
-        usecase
-            .get_message(self.id)
-            .map(|message| message.into())
-            .map_err(|x| x.into())
+        res(usecase.get_message(self.id))
     }
 }

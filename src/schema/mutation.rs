@@ -1,7 +1,11 @@
-use crate::schema::{varify_token, Storage};
+use crate::schema::Storage;
 use async_graphql::{Context, Object, ID};
 
-use super::objects::{message::Message, room::Room, user::User};
+use super::{
+    get_context,
+    objects::{message::Message, room::Room, user::User},
+    res,
+};
 
 pub struct MutationRoot;
 
@@ -14,33 +18,25 @@ impl MutationRoot {
         text: String,
     ) -> async_graphql::Result<Message> {
         let room_id = room_id.parse().unwrap();
-        let uid = varify_token(ctx)?;
-
+        let uctx = get_context(ctx);
         let usecase = &ctx.data_unchecked::<Storage>().usecase;
-        usecase
-            .post_message(uid.0.as_str(), room_id, &text)
-            .map(|message| message.into())
-            .map_err(|x| x.into())
+        let uid = usecase.varify_token(&uctx)?;
+
+        res(usecase.post_message(uid.0.as_str(), room_id, &text))
     }
 
     async fn create_user(&self, ctx: &Context<'_>, name: String) -> async_graphql::Result<User> {
-        let uid = varify_token(ctx)?;
-
+        let uctx = get_context(ctx);
         let usecase = &ctx.data_unchecked::<Storage>().usecase;
-        usecase
-            .create_user(uid.0.as_str(), &name)
-            .map(|user| user.into())
-            .map_err(|x| x.into())
+        let uid = usecase.varify_token(&uctx)?;
+        res(usecase.create_user(uid.0.as_str(), &name))
     }
 
     async fn create_room(&self, ctx: &Context<'_>, code: String) -> async_graphql::Result<Room> {
-        let uid = varify_token(ctx)?;
-
+        let uctx = get_context(ctx);
         let usecase = &ctx.data_unchecked::<Storage>().usecase;
-        usecase
-            .create_room(uid.0.as_str(), &code)
-            .map(|room| room.into())
-            .map_err(|x| x.into())
+        let uid = usecase.varify_token(&uctx)?;
+        res(usecase.create_room(uid.0.as_str(), &code))
     }
 
     async fn join_to_room(

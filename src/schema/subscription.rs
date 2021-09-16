@@ -1,8 +1,8 @@
 use super::{
+    get_context,
     objects::{message::MessageChanged, MutationType},
     Storage,
 };
-use crate::schema::varify_token;
 use async_graphql::{Context, Subscription, ID};
 use futures::{Stream, StreamExt};
 use std::time::Duration;
@@ -29,9 +29,10 @@ impl SubscriptionRoot {
         room_id: ID,
     ) -> async_graphql::Result<impl Stream<Item = MessageChanged>> {
         let room_id = room_id.parse().unwrap();
-        let _uid = varify_token(ctx)?;
-
+        let uctx = get_context(ctx);
         let usecase = &ctx.data_unchecked::<Storage>().usecase;
+        let _uid = usecase.varify_token(&uctx)?;
+
         let mutation_type = match mutation_type {
             Some(MutationType::Created) => Some(crate::domain::MutationType::Created),
             Some(MutationType::Deleted) => Some(crate::domain::MutationType::Deleted),

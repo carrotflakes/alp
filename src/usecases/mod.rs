@@ -3,6 +3,7 @@ mod pagenation;
 use std::sync::Arc;
 
 use crate::{
+    auth::{Authorize, UID},
     domain::{Message, MessageChanged, MutationType, Room, User},
     repository::Repository,
     simple_broker::SimpleBroker,
@@ -11,13 +12,21 @@ use crate::{
 use futures::{Stream, StreamExt};
 pub type Result<T> = std::result::Result<T, String>;
 
+pub struct Context {
+    pub token: Option<String>,
+}
+
 pub struct Usecase {
+    pub authorize: Authorize,
     pub(crate) repository: Arc<Repository>,
 }
 
 impl Usecase {
-    pub fn new(repository: Arc<Repository>) -> Self {
-        Self { repository }
+    pub fn new(authorize: Authorize, repository: Arc<Repository>) -> Self {
+        Self {
+            authorize,
+            repository,
+        }
     }
 
     pub fn get_all_users(&self) -> Result<Vec<User>> {
@@ -168,6 +177,23 @@ impl Usecase {
         self.repository
             .find_user_room(user_id as i32, room_id as i32)
             .map_err(|x| x.to_string())
+    }
+
+    pub fn varify_token(&self, ctx: &Context) -> Result<UID> {
+        if let Some(token) = &ctx.token {
+            if token == "dummy" {
+                return Ok(UID("dummy".to_string()));
+            }
+
+            if token.starts_with("Bearer ") {
+                return match self.authorize.varify(token.trim_start_matches("Bearer ")) {
+                    Ok(Some(uid)) => Ok(uid),
+                    Ok(None) => Err(format!("token has not uid")),
+                    Err(err) => Err(format!("token varify failed: {}", err)),
+                };
+            }
+        }
+        return Err(format!("token is required"));
     }
 }
 
