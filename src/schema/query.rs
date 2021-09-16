@@ -1,4 +1,4 @@
-use super::objects::{Message, User};
+use super::objects::{message::Message, user::User};
 use crate::schema::{varify_token, Storage};
 use async_graphql::connection::{Connection, Edge, EmptyFields};
 use async_graphql::{Context, Object, Result, ID};

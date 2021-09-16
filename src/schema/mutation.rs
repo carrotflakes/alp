@@ -1,6 +1,7 @@
-use super::objects::{Message, Room, User};
 use crate::schema::{varify_token, Storage};
 use async_graphql::{Context, Object, ID};
+
+use super::objects::{message::Message, room::Room, user::User};
 
 pub struct MutationRoot;
 

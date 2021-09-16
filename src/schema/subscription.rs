@@ -1,9 +1,9 @@
 use super::{
-    objects::{MessageChanged, MutationType},
+    objects::{message::MessageChanged, MutationType},
     Storage,
 };
 use crate::schema::varify_token;
-use async_graphql::{Context, ID, Subscription};
+use async_graphql::{Context, Subscription, ID};
 use futures::{Stream, StreamExt};
 use std::time::Duration;
 
