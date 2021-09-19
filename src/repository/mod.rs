@@ -53,6 +53,62 @@ impl Repository {
             .map_err(err)
     }
 
+    pub fn add_message(&self, user_id: i32, room_id: i32, text: &str) -> Result<Message> {
+        let new_message = NewMessage {
+            user_id,
+            room_id,
+            text,
+        };
+
+        diesel::insert_into(messages::table)
+            .values(&new_message)
+            .get_result(&self.get_conn()?)
+            .map_err(err)
+    }
+
+    pub fn create_room(&self, workspace_id: i32, code: &str) -> Result<Room> {
+        let new_room = NewRoom { workspace_id, code };
+
+        diesel::insert_into(rooms::table)
+            .values(&new_room)
+            .get_result(&self.get_conn()?)
+            .map_err(err)
+    }
+
+    pub fn add_user_room(&self, user_id: i32, room_id: i32) -> Result<usize> {
+        let new_user_room = NewUserRoom { user_id, room_id };
+
+        diesel::insert_into(user_rooms::table)
+            .values(&new_user_room)
+            .execute(&self.get_conn()?)
+            .map_err(err)
+    }
+
+    pub fn create_workspace(&self, code: &str) -> Result<Workspace> {
+        let new_workspace = NewWorkspace { code };
+
+        diesel::insert_into(workspaces::table)
+            .values(&new_workspace)
+            .get_result(&self.get_conn()?)
+            .map_err(err)
+    }
+
+    pub fn add_user_workspace(&self, user_id: i32, workspace_id: i32, role: Role) -> Result<usize> {
+        let new_user_workspace = NewWorkspaceUser {
+            user_id,
+            workspace_id,
+            role: match role {
+                Role::Member => "member",
+                Role::Admin => "admin",
+            },
+        };
+
+        diesel::insert_into(workspace_users::table)
+            .values(&new_user_workspace)
+            .execute(&self.get_conn()?)
+            .map_err(err)
+    }
+
     pub fn get_user(&self, id: i32) -> Result<User> {
         users::dsl::users
             .find(id)
@@ -70,19 +126,6 @@ impl Repository {
     pub fn get_all_users(&self) -> Result<Vec<User>> {
         users::dsl::users
             .load::<User>(&self.get_conn()?)
-            .map_err(err)
-    }
-
-    pub fn add_message(&self, user_id: i32, room_id: i32, text: &str) -> Result<Message> {
-        let new_message = NewMessage {
-            user_id,
-            room_id,
-            text,
-        };
-
-        diesel::insert_into(messages::table)
-            .values(&new_message)
-            .get_result(&self.get_conn()?)
             .map_err(err)
     }
 
@@ -130,55 +173,12 @@ impl Repository {
             .map_err(err)
     }
 
-    pub fn create_room(&self, workspace_id: i32, code: &str) -> Result<Room> {
-        let new_room = NewRoom { workspace_id, code };
-
-        diesel::insert_into(rooms::table)
-            .values(&new_room)
-            .get_result(&self.get_conn()?)
-            .map_err(err)
-    }
-
     pub fn get_rooms_by_user_id(&self, user_id: i32) -> Result<Vec<Room>> {
         user_rooms::dsl::user_rooms
             .filter(user_rooms::dsl::user_id.eq(user_id))
             .inner_join(rooms::dsl::rooms)
             .select(rooms::all_columns)
             .get_results(&self.get_conn()?)
-            .map_err(err)
-    }
-
-    pub fn add_user_room(&self, user_id: i32, room_id: i32) -> Result<usize> {
-        let new_user_room = NewUserRoom { user_id, room_id };
-
-        diesel::insert_into(user_rooms::table)
-            .values(&new_user_room)
-            .execute(&self.get_conn()?)
-            .map_err(err)
-    }
-
-    pub fn create_workspace(&self, code: &str) -> Result<Workspace> {
-        let new_workspace = NewWorkspace { code };
-
-        diesel::insert_into(workspaces::table)
-            .values(&new_workspace)
-            .get_result(&self.get_conn()?)
-            .map_err(err)
-    }
-
-    pub fn add_user_workspace(&self, user_id: i32, workspace_id: i32, role: Role) -> Result<usize> {
-        let new_user_workspace = NewWorkspaceUser {
-            user_id,
-            workspace_id,
-            role: match role {
-                Role::Member => "member",
-                Role::Admin => "admin",
-            },
-        };
-
-        diesel::insert_into(workspace_users::table)
-            .values(&new_user_workspace)
-            .execute(&self.get_conn()?)
             .map_err(err)
     }
 
@@ -192,6 +192,13 @@ impl Repository {
             .count()
             .get_result(&self.get_conn()?)
             .map(|count: i64| count == 1)
+            .map_err(err)
+    }
+
+    pub fn get_workspace(&self, id: i32) -> Result<Workspace> {
+        workspaces::dsl::workspaces
+            .find(id)
+            .first::<Workspace>(&self.get_conn()?)
             .map_err(err)
     }
 
@@ -217,6 +224,19 @@ impl Repository {
         rooms::dsl::rooms
             .filter(rooms::dsl::workspace_id.eq(workspace_id))
             .get_results(&self.get_conn()?)
+            .map_err(err)
+    }
+
+    pub fn get_role_to_workspace_by_uid(&self, uid: &str, workspace_id: i32) -> Result<String> {
+        workspace_users::dsl::workspace_users
+            .inner_join(users::dsl::users)
+            .filter(
+                workspace_users::dsl::workspace_id
+                    .eq(workspace_id)
+                    .and(users::dsl::uid.eq(uid)),
+            )
+            .select(workspace_users::dsl::role)
+            .get_result(&self.get_conn()?)
             .map_err(err)
     }
 }

@@ -1,5 +1,5 @@
 import { VFC } from "react";
-import { currentRoomVar } from "../../cache";
+import { currentRoomVar, currentWorkspaceVar } from "../../cache";
 import { useMeQuery } from "../../generated/graphql";
 
 type props = {};
@@ -10,7 +10,16 @@ export const RoomList: VFC<{ className?: string }> = ({ className = "" }) => {
     <div className={className + " w-36 p-2"}>
       {meRes.data?.me.workspaces.map((w) => (
         <div key={w.workspace.id}>
-          {w.workspace.code}
+          <div
+            className="cursor-pointer"
+            onClick={() => {
+              currentWorkspaceVar(w.workspace.id);
+              currentRoomVar(null);
+            }}
+            key={w.workspace.id}
+          >
+            {w.workspace.code}
+          </div>
           {w.workspace.rooms.map((r) => (
             <div
               className="cursor-pointer"

@@ -134,6 +134,7 @@ export type QueryRoot = {
   me: User;
   messages: MessageConnection;
   numbers: IntConnection;
+  workspace: Workspace;
 };
 
 
@@ -151,6 +152,11 @@ export type QueryRootNumbersArgs = {
   before?: Maybe<Scalars['String']>;
   first?: Maybe<Scalars['Int']>;
   last?: Maybe<Scalars['Int']>;
+};
+
+
+export type QueryRootWorkspaceArgs = {
+  id: Scalars['ID'];
 };
 
 export enum Role {
@@ -225,6 +231,29 @@ export type WorkspaceWithRole = {
   role: Role;
   workspace: Workspace;
 };
+
+export type WorkspaceQueryVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type WorkspaceQuery = (
+  { __typename?: 'QueryRoot' }
+  & { workspace: (
+    { __typename?: 'Workspace' }
+    & { rooms: Array<(
+      { __typename?: 'Room' }
+      & Pick<Room, 'id' | 'code'>
+    )>, users: Array<(
+      { __typename?: 'UserWithRole' }
+      & Pick<UserWithRole, 'role'>
+      & { user: (
+        { __typename?: 'User' }
+        & Pick<User, 'id' | 'name'>
+      ) }
+    )> }
+  ) }
+);
 
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -349,6 +378,51 @@ export const MyMessageFragmentDoc = gql`
   createdAt
 }
     `;
+export const WorkspaceDocument = gql`
+    query workspace($id: ID!) {
+  workspace(id: $id) {
+    rooms {
+      id
+      code
+    }
+    users {
+      role
+      user {
+        id
+        name
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useWorkspaceQuery__
+ *
+ * To run a query within a React component, call `useWorkspaceQuery` and pass it any options that fit your needs.
+ * When your component renders, `useWorkspaceQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useWorkspaceQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useWorkspaceQuery(baseOptions: Apollo.QueryHookOptions<WorkspaceQuery, WorkspaceQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<WorkspaceQuery, WorkspaceQueryVariables>(WorkspaceDocument, options);
+      }
+export function useWorkspaceLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<WorkspaceQuery, WorkspaceQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<WorkspaceQuery, WorkspaceQueryVariables>(WorkspaceDocument, options);
+        }
+export type WorkspaceQueryHookResult = ReturnType<typeof useWorkspaceQuery>;
+export type WorkspaceLazyQueryHookResult = ReturnType<typeof useWorkspaceLazyQuery>;
+export type WorkspaceQueryResult = Apollo.QueryResult<WorkspaceQuery, WorkspaceQueryVariables>;
 export const MeDocument = gql`
     query me {
   me {

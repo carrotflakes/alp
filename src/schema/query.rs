@@ -1,6 +1,6 @@
-use super::get_context;
-use super::objects::{message::Message, user::User};
-use crate::schema::{Storage};
+use super::objects::{message::Message, user::User, workspace::Workspace};
+use super::{res, MyToken};
+use crate::schema::Storage;
 use async_graphql::connection::{Connection, Edge, EmptyFields};
 use async_graphql::{Context, Object, Result, ID};
 
@@ -45,9 +45,9 @@ impl QueryRoot {
     }
 
     async fn me(&self, ctx: &Context<'_>) -> Result<User> {
-        let uctx = get_context(ctx);
+        let token = ctx.data_opt::<MyToken>().ok_or("token is required")?;
         let usecase = &ctx.data_unchecked::<Storage>().usecase;
-        let uid = usecase.varify_token(&uctx)?;
+        let uid = usecase.varify_token(&token.0)?;
 
         let user = usecase.find_user_by_uid(uid.0.as_str())?;
         if let Some(user) = user {
@@ -55,6 +55,12 @@ impl QueryRoot {
         } else {
             Err(format!("user not found").into())
         }
+    }
+
+    async fn workspace(&self, ctx: &Context<'_>, id: ID) -> Result<Workspace> {
+        let token = ctx.data_opt::<MyToken>().ok_or("token is required")?;
+        let usecase = &ctx.data_unchecked::<Storage>().usecase;
+        res(usecase.get_workspace(&token.0, id.parse().unwrap()))
     }
 
     async fn numbers(

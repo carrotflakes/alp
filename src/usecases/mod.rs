@@ -12,10 +12,6 @@ use crate::{
 use futures::{Stream, StreamExt};
 pub type Result<T> = std::result::Result<T, String>;
 
-pub struct Context {
-    pub token: Option<String>,
-}
-
 pub struct Usecase {
     pub authorize: Authorize,
     pub(crate) repository: Arc<Repository>,
@@ -203,6 +199,18 @@ impl Usecase {
         }
     }
 
+    pub fn get_workspace(&self, token: &str, workspace_id: usize) -> Result<Workspace> {
+        let uid = self.varify_token(token)?;
+        let _role = self
+            .repository
+            .get_role_to_workspace_by_uid(&uid.0, workspace_id as i32)
+            .map_err(|x| x.to_string())?;
+        self.repository
+            .get_workspace(workspace_id as i32)
+            .map(workspace)
+            .map_err(|x| x.to_string())
+    }
+
     pub fn get_workspaces_by_user_id(&self, user_id: usize) -> Result<Vec<(Workspace, Role)>> {
         self.repository
             .get_workspaces_by_user_id(user_id as i32)
@@ -234,19 +242,17 @@ impl Usecase {
             .map_err(|x| x.to_string())
     }
 
-    pub fn varify_token(&self, ctx: &Context) -> Result<UID> {
-        if let Some(token) = &ctx.token {
-            if token == "dummy" {
-                return Ok(UID("dummy".to_string()));
-            }
+    pub fn varify_token(&self, token: &str) -> Result<UID> {
+        if token == "dummy" {
+            return Ok(UID("dummy".to_string()));
+        }
 
-            if token.starts_with("Bearer ") {
-                return match self.authorize.varify(token.trim_start_matches("Bearer ")) {
-                    Ok(Some(uid)) => Ok(uid),
-                    Ok(None) => Err(format!("token has not uid")),
-                    Err(err) => Err(format!("token varify failed: {}", err)),
-                };
-            }
+        if token.starts_with("Bearer ") {
+            return match self.authorize.varify(token.trim_start_matches("Bearer ")) {
+                Ok(Some(uid)) => Ok(uid),
+                Ok(None) => Err(format!("token has not uid")),
+                Err(err) => Err(format!("token varify failed: {}", err)),
+            };
         }
         return Err(format!("token is required"));
     }

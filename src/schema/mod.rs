@@ -3,7 +3,7 @@ mod objects;
 mod query;
 mod subscription;
 
-use async_graphql::{Context, Result, Schema};
+use async_graphql::{Result, Schema};
 
 use crate::usecases::{self, Usecase};
 use mutation::MutationRoot;
@@ -24,13 +24,6 @@ pub fn new_schema(usecase: Usecase) -> MySchema {
 
 pub struct Storage {
     pub usecase: Usecase,
-}
-
-fn get_context(ctx: &Context<'_>) -> usecases::Context {
-    let token = ctx.data_unchecked::<MyToken>();
-    usecases::Context {
-        token: Some(token.0.to_string()),
-    }
 }
 
 fn res<T, U: From<T>>(res: usecases::Result<T>) -> Result<U> {

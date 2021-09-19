@@ -1,0 +1,15 @@
+query workspace($id: ID!) {
+  workspace(id: $id) {
+    rooms {
+      id
+      code
+    }
+    users {
+      role
+      user {
+        id
+        name
+      }
+    }
+  }
+}

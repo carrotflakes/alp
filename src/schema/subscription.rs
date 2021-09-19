@@ -1,7 +1,6 @@
 use super::{
-    get_context,
     objects::{message::MessageChanged, MutationType},
-    Storage,
+    MyToken, Storage,
 };
 use async_graphql::{Context, Subscription, ID};
 use futures::{Stream, StreamExt};
@@ -29,9 +28,9 @@ impl SubscriptionRoot {
         room_id: ID,
     ) -> async_graphql::Result<impl Stream<Item = MessageChanged>> {
         let room_id = room_id.parse().unwrap();
-        let uctx = get_context(ctx);
+        let token = ctx.data_opt::<MyToken>().ok_or("token is required")?;
         let usecase = &ctx.data_unchecked::<Storage>().usecase;
-        let _uid = usecase.varify_token(&uctx)?;
+        let _uid = usecase.varify_token(&token.0)?;
 
         let mutation_type = match mutation_type {
             Some(MutationType::Created) => Some(crate::domain::MutationType::Created),
