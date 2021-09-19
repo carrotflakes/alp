@@ -42,3 +42,12 @@ pub struct UserWithRole {
     pub user: User,
     pub role: String,
 }
+
+#[derive(Queryable)]
+pub struct WorkspaceInvitation {
+    pub id: i32,
+    pub workspace_id: i32,
+    pub token: String,
+    pub created_at: NaiveDateTime,
+    pub deleted_at: Option<NaiveDateTime>,
+}

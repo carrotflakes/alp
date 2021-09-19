@@ -46,3 +46,12 @@ pub struct MessageChanged {
     pub id: usize,
     pub room_id: usize,
 }
+
+#[derive(Clone)]
+pub struct WorkspaceInvitation {
+    pub id: usize,
+    pub workspace_id: usize,
+    pub token: String,
+    pub created_at: NaiveDateTime,
+    pub deleted_at: Option<NaiveDateTime>,
+}

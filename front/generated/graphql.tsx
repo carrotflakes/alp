@@ -67,12 +67,20 @@ export type MessageEdge = {
 
 export type MutationRoot = {
   __typename?: 'MutationRoot';
+  acceptInvitation: WorkspaceWithRole;
   createRoom: Room;
   createUser: User;
   createWorkspace: Workspace;
+  invite: WorkspaceInvitation;
   joinToRoom: Scalars['Boolean'];
   joinToWorkspace: Scalars['Boolean'];
+  leaveFromWorkspace: Scalars['Boolean'];
   postMessage: Message;
+};
+
+
+export type MutationRootAcceptInvitationArgs = {
+  token: Scalars['String'];
 };
 
 
@@ -92,6 +100,11 @@ export type MutationRootCreateWorkspaceArgs = {
 };
 
 
+export type MutationRootInviteArgs = {
+  workspaceId: Scalars['ID'];
+};
+
+
 export type MutationRootJoinToRoomArgs = {
   roomId: Scalars['ID'];
   userId: Scalars['ID'];
@@ -101,6 +114,11 @@ export type MutationRootJoinToRoomArgs = {
 export type MutationRootJoinToWorkspaceArgs = {
   role: Role;
   userId: Scalars['ID'];
+  workspaceId: Scalars['ID'];
+};
+
+
+export type MutationRootLeaveFromWorkspaceArgs = {
   workspaceId: Scalars['ID'];
 };
 
@@ -226,11 +244,35 @@ export type Workspace = {
   users: Array<UserWithRole>;
 };
 
+export type WorkspaceInvitation = {
+  __typename?: 'WorkspaceInvitation';
+  createdAt: Scalars['String'];
+  id: Scalars['ID'];
+  token: Scalars['String'];
+  workspace: Workspace;
+};
+
 export type WorkspaceWithRole = {
   __typename?: 'WorkspaceWithRole';
   role: Role;
   workspace: Workspace;
 };
+
+export type AcceptInvitationMutationVariables = Exact<{
+  token: Scalars['String'];
+}>;
+
+
+export type AcceptInvitationMutation = (
+  { __typename?: 'MutationRoot' }
+  & { acceptInvitation: (
+    { __typename?: 'WorkspaceWithRole' }
+    & { workspace: (
+      { __typename?: 'Workspace' }
+      & Pick<Workspace, 'id'>
+    ) }
+  ) }
+);
 
 export type WorkspaceQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -252,6 +294,29 @@ export type WorkspaceQuery = (
         & Pick<User, 'id' | 'name'>
       ) }
     )> }
+  ) }
+);
+
+export type LeaveFromWorkspaceMutationVariables = Exact<{
+  workspaceId: Scalars['ID'];
+}>;
+
+
+export type LeaveFromWorkspaceMutation = (
+  { __typename?: 'MutationRoot' }
+  & Pick<MutationRoot, 'leaveFromWorkspace'>
+);
+
+export type InviteMutationVariables = Exact<{
+  workspaceId: Scalars['ID'];
+}>;
+
+
+export type InviteMutation = (
+  { __typename?: 'MutationRoot' }
+  & { invite: (
+    { __typename?: 'WorkspaceInvitation' }
+    & Pick<WorkspaceInvitation, 'token'>
   ) }
 );
 
@@ -378,6 +443,41 @@ export const MyMessageFragmentDoc = gql`
   createdAt
 }
     `;
+export const AcceptInvitationDocument = gql`
+    mutation acceptInvitation($token: String!) {
+  acceptInvitation(token: $token) {
+    workspace {
+      id
+    }
+  }
+}
+    `;
+export type AcceptInvitationMutationFn = Apollo.MutationFunction<AcceptInvitationMutation, AcceptInvitationMutationVariables>;
+
+/**
+ * __useAcceptInvitationMutation__
+ *
+ * To run a mutation, you first call `useAcceptInvitationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAcceptInvitationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [acceptInvitationMutation, { data, loading, error }] = useAcceptInvitationMutation({
+ *   variables: {
+ *      token: // value for 'token'
+ *   },
+ * });
+ */
+export function useAcceptInvitationMutation(baseOptions?: Apollo.MutationHookOptions<AcceptInvitationMutation, AcceptInvitationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AcceptInvitationMutation, AcceptInvitationMutationVariables>(AcceptInvitationDocument, options);
+      }
+export type AcceptInvitationMutationHookResult = ReturnType<typeof useAcceptInvitationMutation>;
+export type AcceptInvitationMutationResult = Apollo.MutationResult<AcceptInvitationMutation>;
+export type AcceptInvitationMutationOptions = Apollo.BaseMutationOptions<AcceptInvitationMutation, AcceptInvitationMutationVariables>;
 export const WorkspaceDocument = gql`
     query workspace($id: ID!) {
   workspace(id: $id) {
@@ -423,6 +523,70 @@ export function useWorkspaceLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<
 export type WorkspaceQueryHookResult = ReturnType<typeof useWorkspaceQuery>;
 export type WorkspaceLazyQueryHookResult = ReturnType<typeof useWorkspaceLazyQuery>;
 export type WorkspaceQueryResult = Apollo.QueryResult<WorkspaceQuery, WorkspaceQueryVariables>;
+export const LeaveFromWorkspaceDocument = gql`
+    mutation leaveFromWorkspace($workspaceId: ID!) {
+  leaveFromWorkspace(workspaceId: $workspaceId)
+}
+    `;
+export type LeaveFromWorkspaceMutationFn = Apollo.MutationFunction<LeaveFromWorkspaceMutation, LeaveFromWorkspaceMutationVariables>;
+
+/**
+ * __useLeaveFromWorkspaceMutation__
+ *
+ * To run a mutation, you first call `useLeaveFromWorkspaceMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useLeaveFromWorkspaceMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [leaveFromWorkspaceMutation, { data, loading, error }] = useLeaveFromWorkspaceMutation({
+ *   variables: {
+ *      workspaceId: // value for 'workspaceId'
+ *   },
+ * });
+ */
+export function useLeaveFromWorkspaceMutation(baseOptions?: Apollo.MutationHookOptions<LeaveFromWorkspaceMutation, LeaveFromWorkspaceMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<LeaveFromWorkspaceMutation, LeaveFromWorkspaceMutationVariables>(LeaveFromWorkspaceDocument, options);
+      }
+export type LeaveFromWorkspaceMutationHookResult = ReturnType<typeof useLeaveFromWorkspaceMutation>;
+export type LeaveFromWorkspaceMutationResult = Apollo.MutationResult<LeaveFromWorkspaceMutation>;
+export type LeaveFromWorkspaceMutationOptions = Apollo.BaseMutationOptions<LeaveFromWorkspaceMutation, LeaveFromWorkspaceMutationVariables>;
+export const InviteDocument = gql`
+    mutation invite($workspaceId: ID!) {
+  invite(workspaceId: $workspaceId) {
+    token
+  }
+}
+    `;
+export type InviteMutationFn = Apollo.MutationFunction<InviteMutation, InviteMutationVariables>;
+
+/**
+ * __useInviteMutation__
+ *
+ * To run a mutation, you first call `useInviteMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useInviteMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [inviteMutation, { data, loading, error }] = useInviteMutation({
+ *   variables: {
+ *      workspaceId: // value for 'workspaceId'
+ *   },
+ * });
+ */
+export function useInviteMutation(baseOptions?: Apollo.MutationHookOptions<InviteMutation, InviteMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<InviteMutation, InviteMutationVariables>(InviteDocument, options);
+      }
+export type InviteMutationHookResult = ReturnType<typeof useInviteMutation>;
+export type InviteMutationResult = Apollo.MutationResult<InviteMutation>;
+export type InviteMutationOptions = Apollo.BaseMutationOptions<InviteMutation, InviteMutationVariables>;
 export const MeDocument = gql`
     query me {
   me {

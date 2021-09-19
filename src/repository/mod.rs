@@ -1,12 +1,15 @@
 mod insert;
 mod query;
 
+use chrono::Utc;
 use diesel::prelude::*;
 use std::sync::Arc;
 
 use crate::{
     db::{
-        schema::{messages, rooms, user_rooms, users, workspace_users, workspaces},
+        schema::{
+            messages, rooms, user_rooms, users, workspace_invitations, workspace_users, workspaces,
+        },
         PgPool, PgPooled,
     },
     domain::Role,
@@ -107,6 +110,41 @@ impl Repository {
             .values(&new_user_workspace)
             .execute(&self.get_conn()?)
             .map_err(err)
+    }
+
+    pub fn create_workspace_invitation(
+        &self,
+        workspace_id: i32,
+        token: &str,
+    ) -> Result<WorkspaceInvitation> {
+        let new_workspace_invitation = NewWorkspaceInvitation {
+            workspace_id,
+            token,
+        };
+
+        diesel::insert_into(workspace_invitations::table)
+            .values(&new_workspace_invitation)
+            .get_result(&self.get_conn()?)
+            .map_err(err)
+    }
+
+    pub fn delete_workspace_invitation(&self, id: i32) -> Result<WorkspaceInvitation> {
+        diesel::update(workspace_invitations::dsl::workspace_invitations.find(id))
+            .set(workspace_invitations::dsl::deleted_at.eq(Utc::now().naive_utc()))
+            .get_result(&self.get_conn()?)
+            .map_err(err)
+    }
+    pub fn remove_user_workspace(&self, user_id: i32, workspace_id: i32) -> Result<bool> {
+        diesel::delete(
+            workspace_users::dsl::workspace_users.filter(
+                workspace_users::dsl::user_id
+                    .eq(user_id)
+                    .and(workspace_users::dsl::workspace_id.eq(workspace_id)),
+            ),
+        )
+        .execute(&self.get_conn()?)
+        .map(|c| c == 1)
+        .map_err(err)
     }
 
     pub fn get_user(&self, id: i32) -> Result<User> {
@@ -236,6 +274,17 @@ impl Repository {
                     .and(users::dsl::uid.eq(uid)),
             )
             .select(workspace_users::dsl::role)
+            .get_result(&self.get_conn()?)
+            .map_err(err)
+    }
+
+    pub fn get_workspace_invitation_by_token(&self, token: &str) -> Result<WorkspaceInvitation> {
+        workspace_invitations::dsl::workspace_invitations
+            .filter(
+                workspace_invitations::dsl::token
+                    .eq(token)
+                    .and(workspace_invitations::dsl::deleted_at.is_null()),
+            )
             .get_result(&self.get_conn()?)
             .map_err(err)
     }

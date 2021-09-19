@@ -34,6 +34,16 @@ table! {
 }
 
 table! {
+    workspace_invitations (id) {
+        id -> Int4,
+        workspace_id -> Int4,
+        token -> Varchar,
+        created_at -> Timestamp,
+        deleted_at -> Nullable<Timestamp>,
+    }
+}
+
+table! {
     workspace_users (id) {
         id -> Int4,
         workspace_id -> Int4,
@@ -55,6 +65,7 @@ joinable!(messages -> users (user_id));
 joinable!(rooms -> workspaces (workspace_id));
 joinable!(user_rooms -> rooms (room_id));
 joinable!(user_rooms -> users (user_id));
+joinable!(workspace_invitations -> workspaces (workspace_id));
 joinable!(workspace_users -> users (user_id));
 joinable!(workspace_users -> workspaces (workspace_id));
 
@@ -63,6 +74,7 @@ allow_tables_to_appear_in_same_query!(
     rooms,
     user_rooms,
     users,
+    workspace_invitations,
     workspace_users,
     workspaces,
 );

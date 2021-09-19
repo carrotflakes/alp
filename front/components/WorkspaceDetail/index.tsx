@@ -1,5 +1,5 @@
 import { VFC } from "react";
-import { useWorkspaceQuery } from "../../generated/graphql";
+import { useInviteMutation, useLeaveFromWorkspaceMutation, useWorkspaceQuery } from "../../generated/graphql";
 
 type props = {
   className?: string;
@@ -11,6 +11,8 @@ export const WorkspaceDetail: VFC<props> = ({
   workspaceId,
 }) => {
   const { data } = useWorkspaceQuery({ variables: { id: workspaceId } });
+  const [inviteMut] = useInviteMutation();
+  const [leaveMut] = useLeaveFromWorkspaceMutation();
 
   return (
     <div className={className + " p-2"}>
@@ -27,6 +29,32 @@ export const WorkspaceDetail: VFC<props> = ({
           - {r.code}
         </div>
       ))}
+      <br />
+      <button
+        onClick={() => {
+          inviteMut({
+            variables: { workspaceId },
+            onCompleted(data) {
+              console.log("token: " + data.invite.token);
+            },
+          });
+        }}
+      >
+        invite
+      </button>
+      <br />
+      <button
+        onClick={() => {
+          leaveMut({
+            variables: { workspaceId },
+            onCompleted(data) {
+              console.log("leaved");
+            },
+          });
+        }}
+      >
+        leave
+      </button>
     </div>
   );
 };

@@ -4,12 +4,15 @@ use std::sync::Arc;
 
 use crate::{
     auth::{Authorize, UID},
-    domain::{Message, MessageChanged, MutationType, Role, Room, User, Workspace},
+    domain::{
+        Message, MessageChanged, MutationType, Role, Room, User, Workspace, WorkspaceInvitation,
+    },
     repository::Repository,
     simple_broker::SimpleBroker,
 };
 
 use futures::{Stream, StreamExt};
+use uuid::Uuid;
 pub type Result<T> = std::result::Result<T, String>;
 
 pub struct Usecase {
@@ -242,6 +245,52 @@ impl Usecase {
             .map_err(|x| x.to_string())
     }
 
+    pub fn invite(&self, workspace_id: usize) -> Result<WorkspaceInvitation> {
+        let token = Uuid::new_v4();
+        self.repository
+            .create_workspace_invitation(workspace_id as i32, &token.to_string())
+            .map(workspace_invitation)
+            .map_err(|x| x.to_string())
+    }
+
+    pub fn accept_invitation(&self, user_token: &str, token: &str) -> Result<(Workspace, Role)> {
+        let wi = self
+            .repository
+            .get_workspace_invitation_by_token(token)
+            .map_err(|x| x.to_string())?;
+
+        let uid = self.varify_token(user_token)?;
+        self.repository
+            .delete_workspace_invitation(wi.id)
+            .map_err(|x| x.to_string())?;
+
+        let ws = self
+            .repository
+            .get_workspace(wi.workspace_id)
+            .map_err(|x| x.to_string())?;
+
+        let user = self
+            .repository
+            .get_user_by_uid(&uid.0)
+            .map_err(|x| x.to_string())?;
+
+        self.repository
+            .add_user_workspace(user.id, wi.workspace_id, Role::Member)
+            .map(|_| (workspace(ws), Role::Member))
+            .map_err(|x| x.to_string())
+    }
+
+    pub fn leave_from_workspace(&self, token: &str, workspace_id: usize) -> Result<bool> {
+        let uid = self.varify_token(token)?;
+        let user = self
+            .repository
+            .get_user_by_uid(&uid.0)
+            .map_err(|x| x.to_string())?;
+        self.repository
+            .remove_user_workspace(user.id as i32, workspace_id as i32)
+            .map_err(|x| x.to_string())
+    }
+
     pub fn varify_token(&self, token: &str) -> Result<UID> {
         if token == "dummy" {
             return Ok(UID("dummy".to_string()));
@@ -289,6 +338,18 @@ pub fn workspace(workspace: crate::repository::Workspace) -> Workspace {
         id: workspace.id as usize,
         code: workspace.code,
         created_at: workspace.created_at,
+    }
+}
+
+pub fn workspace_invitation(
+    workspace_invitation: crate::repository::WorkspaceInvitation,
+) -> WorkspaceInvitation {
+    WorkspaceInvitation {
+        id: workspace_invitation.id as usize,
+        workspace_id: workspace_invitation.workspace_id as usize,
+        token: workspace_invitation.token,
+        created_at: workspace_invitation.created_at,
+        deleted_at: workspace_invitation.deleted_at,
     }
 }
 

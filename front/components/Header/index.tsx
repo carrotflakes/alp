@@ -3,9 +3,11 @@ import { AuthContext } from "../../context/auth";
 import { useCreateUserMutation, useMeQuery } from "../../generated/graphql";
 import firebase from "firebase";
 import Link from "next/link";
+import { useRouter } from "next/router";
 
 export const Header: VFC<{ className?: string }> = ({ className = "" }) => {
   const { currentUser } = useContext(AuthContext);
+  const router = useRouter();
 
   const meRes = useMeQuery();
   const [createUser] = useCreateUserMutation({
@@ -27,7 +29,10 @@ export const Header: VFC<{ className?: string }> = ({ className = "" }) => {
     <div className={className + " p-2"}>
       {currentUser ? (
         <div>
-          signed in as {currentUser?.displayName}
+          signed in as{" "}
+          <span onClick={() => router.push("/me")}>
+            {currentUser?.displayName}
+          </span>
           <span className="ml-6" onClick={() => firebase.auth().signOut()}>
             sign out
           </span>

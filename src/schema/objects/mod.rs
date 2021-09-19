@@ -1,3 +1,4 @@
+pub mod invitation;
 pub mod message;
 pub mod role;
 pub mod room;

@@ -1,4 +1,6 @@
-use crate::db::schema::{messages, rooms, user_rooms, users, workspace_users, workspaces};
+use crate::db::schema::{
+    messages, rooms, user_rooms, users, workspace_invitations, workspace_users, workspaces,
+};
 
 #[derive(Insertable)]
 #[table_name = "users"]
@@ -34,10 +36,17 @@ pub struct NewUserRoom {
 pub struct NewWorkspace<'a> {
     pub code: &'a str,
 }
+
 #[derive(Insertable)]
 #[table_name = "workspace_users"]
 pub struct NewWorkspaceUser<'a> {
     pub workspace_id: i32,
     pub user_id: i32,
     pub role: &'a str,
+}
+#[derive(Insertable)]
+#[table_name = "workspace_invitations"]
+pub struct NewWorkspaceInvitation<'a> {
+    pub workspace_id: i32,
+    pub token: &'a str,
 }

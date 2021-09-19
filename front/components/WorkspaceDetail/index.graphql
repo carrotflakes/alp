@@ -13,3 +13,13 @@ query workspace($id: ID!) {
     }
   }
 }
+
+mutation leaveFromWorkspace($workspaceId: ID!) {
+  leaveFromWorkspace(workspaceId: $workspaceId)
+}
+
+mutation invite($workspaceId: ID!) {
+  invite(workspaceId: $workspaceId) {
+    token
+  }
+}
