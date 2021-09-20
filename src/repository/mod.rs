@@ -96,7 +96,13 @@ impl Repository {
             .map_err(err)
     }
 
-    pub fn add_user_workspace(&self, user_id: i32, workspace_id: i32, role: Role) -> Result<usize> {
+    pub fn add_user_workspace(
+        &self,
+        user_id: i32,
+        workspace_id: i32,
+        role: Role,
+        screen_name: &str,
+    ) -> Result<WorkspaceUser> {
         let new_user_workspace = NewWorkspaceUser {
             user_id,
             workspace_id,
@@ -104,11 +110,12 @@ impl Repository {
                 Role::Member => "member",
                 Role::Admin => "admin",
             },
+            screen_name,
         };
 
         diesel::insert_into(workspace_users::table)
             .values(&new_user_workspace)
-            .execute(&self.get_conn()?)
+            .get_result(&self.get_conn()?)
             .map_err(err)
     }
 
@@ -240,20 +247,16 @@ impl Repository {
             .map_err(err)
     }
 
-    pub fn get_workspaces_by_user_id(&self, user_id: i32) -> Result<Vec<WorkspaceWithRole>> {
+    pub fn get_workspaces_by_user_id(&self, user_id: i32) -> Result<Vec<WorkspaceUser>> {
         workspace_users::dsl::workspace_users
             .filter(workspace_users::dsl::user_id.eq(user_id))
-            .inner_join(workspaces::dsl::workspaces)
-            .select((workspaces::all_columns, workspace_users::dsl::role))
             .get_results(&self.get_conn()?)
             .map_err(err)
     }
 
-    pub fn get_users_by_workspace_id(&self, workspace_id: i32) -> Result<Vec<UserWithRole>> {
+    pub fn get_users_by_workspace_id(&self, workspace_id: i32) -> Result<Vec<WorkspaceUser>> {
         workspace_users::dsl::workspace_users
             .filter(workspace_users::dsl::workspace_id.eq(workspace_id))
-            .inner_join(users::dsl::users)
-            .select((users::all_columns, workspace_users::dsl::role))
             .get_results(&self.get_conn()?)
             .map_err(err)
     }

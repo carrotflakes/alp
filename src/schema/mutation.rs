@@ -3,12 +3,8 @@ use async_graphql::{Context, Object, Result, ID};
 
 use super::{
     objects::{
-        invitation::WorkspaceInvitation,
-        message::Message,
-        role::Role,
-        room::Room,
-        user::User,
-        workspace::{Workspace, WorkspaceWithRole},
+        invitation::WorkspaceInvitation, message::Message, role::Role, room::Room, user::User,
+        workspace::Workspace, workspace_user::WorkspaceUser,
     },
     res, MyToken,
 };
@@ -54,6 +50,7 @@ impl MutationRoot {
         user_id: ID,
         workspace_id: ID,
         role: Role,
+        screen_name: String,
     ) -> Result<bool> {
         let usecase = &ctx.data_unchecked::<Storage>().usecase;
         usecase
@@ -61,6 +58,7 @@ impl MutationRoot {
                 user_id.parse().unwrap(),
                 workspace_id.parse().unwrap(),
                 role.into(),
+                &screen_name,
             )
             .map(|_| true)
             .map_err(|x| x.into())
@@ -87,11 +85,7 @@ impl MutationRoot {
         res(usecase.invite(workspace_id.parse().unwrap()))
     }
 
-    async fn accept_invitation(
-        &self,
-        ctx: &Context<'_>,
-        token: String,
-    ) -> Result<WorkspaceWithRole> {
+    async fn accept_invitation(&self, ctx: &Context<'_>, token: String) -> Result<WorkspaceUser> {
         let user_token = ctx.data_opt::<MyToken>().ok_or("token is required")?;
         let usecase = &ctx.data_unchecked::<Storage>().usecase;
         res(usecase.accept_invitation(&user_token.0, &token))

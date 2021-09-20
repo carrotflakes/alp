@@ -32,15 +32,12 @@ pub struct Workspace {
 }
 
 #[derive(Queryable)]
-pub struct WorkspaceWithRole {
-    pub workspace: Workspace,
+pub struct WorkspaceUser {
+    pub id: i32,
+    pub workspace_id: i32,
+    pub user_id: i32,
     pub role: String,
-}
-
-#[derive(Queryable)]
-pub struct UserWithRole {
-    pub user: User,
-    pub role: String,
+    pub screen_name: String,
 }
 
 #[derive(Queryable)]

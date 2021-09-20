@@ -6,6 +6,7 @@ use crate::{
     auth::{Authorize, UID},
     domain::{
         Message, MessageChanged, MutationType, Role, Room, User, Workspace, WorkspaceInvitation,
+        WorkspaceUser,
     },
     repository::Repository,
     simple_broker::SimpleBroker,
@@ -172,9 +173,15 @@ impl Usecase {
             .map_err(|x| x.to_string())
     }
 
-    pub fn join_to_workspace(&self, user_id: usize, workspace_id: usize, role: Role) -> Result<()> {
+    pub fn join_to_workspace(
+        &self,
+        user_id: usize,
+        workspace_id: usize,
+        role: Role,
+        screen_name: &str,
+    ) -> Result<()> {
         self.repository
-            .add_user_workspace(user_id as i32, workspace_id as i32, role)
+            .add_user_workspace(user_id as i32, workspace_id as i32, role, screen_name)
             .map(|_| ())
             .map_err(|x| x.to_string())
     }
@@ -194,7 +201,7 @@ impl Usecase {
                 .map_err(|x| x.to_string())?;
             dbg!((user.id, workspace.id));
             self.repository
-                .add_user_workspace(user.id as i32, workspace.id as i32, Role::Admin)
+                .add_user_workspace(user.id as i32, workspace.id as i32, Role::Admin, &user.name)
                 .map_err(|x| x.to_string())?;
             Ok(workspace)
         } else {
@@ -214,27 +221,17 @@ impl Usecase {
             .map_err(|x| x.to_string())
     }
 
-    pub fn get_workspaces_by_user_id(&self, user_id: usize) -> Result<Vec<(Workspace, Role)>> {
+    pub fn get_workspaces_by_user_id(&self, user_id: usize) -> Result<Vec<WorkspaceUser>> {
         self.repository
             .get_workspaces_by_user_id(user_id as i32)
-            .map(|workspaces| {
-                workspaces
-                    .into_iter()
-                    .map(|ws| (workspace(ws.workspace), role(&ws.role)))
-                    .collect()
-            })
+            .map(|workspaces| workspaces.into_iter().map(workspace_user).collect())
             .map_err(|x| x.to_string())
     }
 
-    pub fn get_users_by_workspace_id(&self, workspace_id: usize) -> Result<Vec<(User, Role)>> {
+    pub fn get_users_by_workspace_id(&self, workspace_id: usize) -> Result<Vec<WorkspaceUser>> {
         self.repository
             .get_users_by_workspace_id(workspace_id as i32)
-            .map(|users| {
-                users
-                    .into_iter()
-                    .map(|u| (user(u.user), role(&u.role)))
-                    .collect()
-            })
+            .map(|users| users.into_iter().map(workspace_user).collect())
             .map_err(|x| x.to_string())
     }
 
@@ -253,7 +250,7 @@ impl Usecase {
             .map_err(|x| x.to_string())
     }
 
-    pub fn accept_invitation(&self, user_token: &str, token: &str) -> Result<(Workspace, Role)> {
+    pub fn accept_invitation(&self, user_token: &str, token: &str) -> Result<WorkspaceUser> {
         let wi = self
             .repository
             .get_workspace_invitation_by_token(token)
@@ -264,19 +261,14 @@ impl Usecase {
             .delete_workspace_invitation(wi.id)
             .map_err(|x| x.to_string())?;
 
-        let ws = self
-            .repository
-            .get_workspace(wi.workspace_id)
-            .map_err(|x| x.to_string())?;
-
         let user = self
             .repository
             .get_user_by_uid(&uid.0)
             .map_err(|x| x.to_string())?;
 
         self.repository
-            .add_user_workspace(user.id, wi.workspace_id, Role::Member)
-            .map(|_| (workspace(ws), Role::Member))
+            .add_user_workspace(user.id, wi.workspace_id, Role::Member, &user.name)
+            .map(workspace_user)
             .map_err(|x| x.to_string())
     }
 
@@ -350,6 +342,16 @@ pub fn workspace_invitation(
         token: workspace_invitation.token,
         created_at: workspace_invitation.created_at,
         deleted_at: workspace_invitation.deleted_at,
+    }
+}
+
+pub fn workspace_user(workspace_user: crate::repository::WorkspaceUser) -> WorkspaceUser {
+    WorkspaceUser {
+        id: workspace_user.id as usize,
+        workspace_id: workspace_user.workspace_id as usize,
+        user_id: workspace_user.user_id as usize,
+        role: role(&workspace_user.role),
+        screen_name: workspace_user.screen_name,
     }
 }
 

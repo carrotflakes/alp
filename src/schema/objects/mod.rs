@@ -4,6 +4,7 @@ pub mod role;
 pub mod room;
 pub mod user;
 pub mod workspace;
+pub mod workspace_user;
 
 use super::Storage;
 use async_graphql::Enum;

@@ -1,4 +1,4 @@
-use super::{Storage, role::Role, room::Room, user::UserWithRole};
+use super::{room::Room, workspace_user::WorkspaceUser, Storage};
 use async_graphql::{ComplexObject, Context, Result, SimpleObject, ID};
 use chrono::NaiveDateTime;
 
@@ -26,11 +26,11 @@ impl Workspace {
             .map_err(|x| x.into())
     }
 
-    async fn users(&self, ctx: &Context<'_>) -> Result<Vec<UserWithRole>> {
+    async fn users(&self, ctx: &Context<'_>) -> Result<Vec<WorkspaceUser>> {
         let usecase = &ctx.data_unchecked::<Storage>().usecase;
         usecase
             .get_users_by_workspace_id(self.id)
-            .map(|users| users.into_iter().map(UserWithRole::from).collect())
+            .map(|users| users.into_iter().map(WorkspaceUser::from).collect())
             .map_err(|x| x.into())
     }
 
@@ -45,21 +45,6 @@ impl From<crate::domain::Workspace> for Workspace {
             id: w.id,
             code: w.code,
             created_at: w.created_at,
-        }
-    }
-}
-
-#[derive(Clone, SimpleObject)]
-pub struct WorkspaceWithRole {
-    pub workspace: Workspace,
-    pub role: Role,
-}
-
-impl From<(crate::domain::Workspace, crate::domain::Role)> for WorkspaceWithRole {
-    fn from((workspace, role): (crate::domain::Workspace, crate::domain::Role)) -> Self {
-        WorkspaceWithRole {
-            workspace: workspace.into(),
-            role: role.into(),
         }
     }
 }

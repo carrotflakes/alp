@@ -43,6 +43,7 @@ pub struct NewWorkspaceUser<'a> {
     pub workspace_id: i32,
     pub user_id: i32,
     pub role: &'a str,
+    pub screen_name: &'a str,
 }
 #[derive(Insertable)]
 #[table_name = "workspace_invitations"]

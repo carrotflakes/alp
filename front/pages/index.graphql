@@ -8,6 +8,7 @@ query me {
     }
     workspaces {
       role
+      screenName
       workspace {
         id
         code

@@ -49,6 +49,7 @@ table! {
         workspace_id -> Int4,
         user_id -> Int4,
         role -> Varchar,
+        screen_name -> Varchar,
     }
 }
 

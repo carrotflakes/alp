@@ -28,6 +28,14 @@ pub struct Workspace {
     pub created_at: DateTime,
 }
 
+pub struct WorkspaceUser {
+    pub id: usize,
+    pub workspace_id: usize,
+    pub user_id: usize,
+    pub role: Role,
+    pub screen_name: String,
+}
+
 #[derive(Clone, Copy, PartialEq)]
 pub enum Role {
     Member,
