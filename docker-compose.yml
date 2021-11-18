@@ -7,7 +7,7 @@ services:
     ports:
       - 8000:8000
     volumes:
-      - ./src:/usr/src/myapp/src
+      - ./src:/app/src
     environment:
       DATABASE_URL: "postgres://root:root@db"
   front:
