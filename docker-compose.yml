@@ -16,6 +16,8 @@ services:
       dockerfile: Dockerfile.dev
     ports:
       - 3000:3000
+    environment:
+      - SERVER_URL
     volumes:
       - ./front:/opt/app
   db:

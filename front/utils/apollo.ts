@@ -4,8 +4,12 @@ import { getMainDefinition, relayStylePagination } from '@apollo/client/utilitie
 import { setContext } from '@apollo/client/link/context'
 
 function createLink(idToken: string | undefined) {
+  if (!process.env.SERVER_URL) {
+    throw new Error('No server url')
+  }
+  
   const httpLink = new HttpLink({
-    uri: 'http://localhost:8000/'
+    uri: process.env.SERVER_URL,
   })
 
   if (typeof window === 'undefined') {
@@ -13,7 +17,7 @@ function createLink(idToken: string | undefined) {
   }
 
   const wsLink = new WebSocketLink({
-    uri: 'ws://localhost:8000/',
+    uri: process.env.SERVER_URL.replace(/^http/, 'ws'),
     options: {
       reconnect: true,
       lazy: true,
