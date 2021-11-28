@@ -4,11 +4,12 @@ relies:
 
 - Rust
 - GraphQL (async-graphql)
-- actix-web
+- actix-web v3
 - Next.js
 - Firebase Authentication
 - diesel
 - PostgreSQL
+- Redis
 
 ## TODO
 
