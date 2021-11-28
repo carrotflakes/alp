@@ -3,6 +3,7 @@ mod query;
 
 use chrono::Utc;
 use diesel::prelude::*;
+use redis::Commands;
 use std::sync::Arc;
 
 use crate::{
@@ -12,13 +13,14 @@ use crate::{
         },
         PgPool, PgPooled,
     },
-    domain::Role,
+    domain::{Role, UserStatus},
 };
 use insert::*;
 pub use query::*;
 
 pub struct Repository {
     conn: Arc<PgPool>,
+    redis: Arc<redis::Client>,
 }
 
 #[derive(Debug)]
@@ -39,8 +41,8 @@ impl Error {
 pub type Result<T> = std::result::Result<T, Error>;
 
 impl Repository {
-    pub fn new(conn: Arc<PgPool>) -> Self {
-        Self { conn }
+    pub fn new(conn: Arc<PgPool>, redis: Arc<redis::Client>) -> Self {
+        Self { conn, redis }
     }
 
     fn get_conn(&self) -> Result<PgPooled> {
@@ -281,6 +283,13 @@ impl Repository {
             .map_err(err)
     }
 
+    pub fn get_workspace_user(&self, workspace_user_id: i32) -> Result<WorkspaceUser> {
+        workspace_users::dsl::workspace_users
+            .find(workspace_user_id)
+            .first::<WorkspaceUser>(&self.get_conn()?)
+            .map_err(err)
+    }
+
     pub fn get_workspace_invitation_by_token(&self, token: &str) -> Result<WorkspaceInvitation> {
         workspace_invitations::dsl::workspace_invitations
             .filter(
@@ -290,6 +299,39 @@ impl Repository {
             )
             .get_result(&self.get_conn()?)
             .map_err(err)
+    }
+
+    pub fn upsert_user_status(
+        &self,
+        workspace_user_id: usize,
+        user_status: UserStatus,
+    ) -> Result<()> {
+        let mut redis = self
+            .redis
+            .get_connection()
+            .map_err(|e| Error::Other(e.to_string()))?;
+        redis
+            .set_ex::<String, String, ()>(
+                format!("userStatus:{}", workspace_user_id),
+                user_status.to_string(),
+                60 * 10,
+            )
+            .map_err(|e| Error::Other(e.to_string()))?;
+        Ok(())
+    }
+
+    pub fn get_user_status(&self, workspace_user_id: usize) -> Result<UserStatus> {
+        let mut redis = self
+            .redis
+            .get_connection()
+            .map_err(|e| Error::Other(e.to_string()))?;
+        redis
+            .get::<String, Option<String>>(format!("userStatus:{}", workspace_user_id))
+            .map_err(|e| Error::Other(e.to_string()))
+            .and_then(|s| match s {
+                Some(s) => s.parse().map_err(|e| Error::Other(e)),
+                None => Ok(UserStatus::Offline),
+            })
     }
 }
 
@@ -303,7 +345,12 @@ pub fn err(err: diesel::result::Error) -> Error {
 #[test]
 fn test() {
     let connection = super::db::new_pool().unwrap();
-    let repository = Repository::new(connection);
+    let redis_client = Arc::new(
+        redis::Client::open("redis://redis:6379/")
+            .map_err(|x| x.to_string())
+            .unwrap(),
+    );
+    let repository = Repository::new(connection, redis_client);
     repository.create_user("uid", "hello").unwrap();
     let results = repository.get_all_users().unwrap();
 

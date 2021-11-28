@@ -1,6 +1,8 @@
 schema: 'http://localhost:8000'
 documents:
   - pages/**/*.graphql
+  - context/**/*.graphql
+  - hooks/**/*.graphql
   - components/**/*.graphql
 extensions:
   codegen:

@@ -10,6 +10,10 @@ services:
       - ./src:/app/src
     environment:
       DATABASE_URL: "postgres://root:root@db"
+      REDIS_URL: "redis://redis:6379"
+    depends_on:
+      - db
+      - redis
   front:
     build:
       context: ./front
@@ -33,3 +37,10 @@ services:
     hostname: postgres
     restart: always
     user: root
+  redis:
+    image: redis:6.2
+    command: redis-server /usr/local/etc/redis/redis.conf
+    ports:
+      - 6379:6379
+    volumes:
+      - ./redis/conf:/usr/local/etc/redis

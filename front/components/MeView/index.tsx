@@ -1,6 +1,7 @@
 import { useState, VFC } from "react";
 import {
   useAcceptInvitationMutation,
+  useCreateWorkspaceMutation,
   useMeQuery,
 } from "../../generated/graphql";
 
@@ -8,6 +9,8 @@ export const MeView: VFC<{ className?: string }> = ({ className = "" }) => {
   const meRes = useMeQuery();
   const [invitationToken, setInvitationToken] = useState("");
   const [accept] = useAcceptInvitationMutation();
+  const [workspaceCode, setWorkspaceCode] = useState("");
+  const [createWorkspace] = useCreateWorkspaceMutation();
 
   return (
     <div className={className + " p-2"}>
@@ -29,6 +32,25 @@ export const MeView: VFC<{ className?: string }> = ({ className = "" }) => {
           }
         >
           verify
+        </button>
+      </div>
+      <div>
+        <input
+          type="text"
+          value={workspaceCode}
+          onChange={(e) => setWorkspaceCode(e.target.value)}
+        />
+        <button
+          onClick={() =>
+            createWorkspace({
+              variables: { code: workspaceCode },
+              onCompleted(e) {
+                console.log(e);
+              },
+            })
+          }
+        >
+          create workspace
         </button>
       </div>
     </div>

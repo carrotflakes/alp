@@ -7,4 +7,5 @@ mod domain;
 pub mod repository;
 pub mod schema;
 mod simple_broker;
+pub mod subscribe;
 pub mod usecases;

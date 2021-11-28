@@ -13,6 +13,7 @@ relies:
 ## TODO
 
 - error handling
+- n+1 problem
 - logging
 - transaction
 - scalable

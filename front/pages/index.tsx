@@ -1,13 +1,13 @@
 import { useReactiveVar } from "@apollo/client";
 import Head from "next/head";
-import { currentRoomVar, currentWorkspaceVar } from "../cache";
+import { currentRoomVar, currentWorkspaceVar } from "../vars";
 import { ChatView } from "../components/ChatView";
 import { Header } from "../components/Header";
 import { RoomList } from "../components/RoomList";
 import { WorkspaceDetail } from "../components/WorkspaceDetail";
 
 export default function Home() {
-  const workspaceId = useReactiveVar(currentWorkspaceVar);
+  const userWorkspace = useReactiveVar(currentWorkspaceVar);
   const roomId = useReactiveVar(currentRoomVar);
 
   return (
@@ -26,12 +26,12 @@ export default function Home() {
         <div className="flex flex-row flex-1">
           <RoomList className="flex-initial" />
 
-          {workspaceId && !roomId && (
+          {userWorkspace && !roomId && (
             <>
               <div className="w-1 flex-none bg-gray-200"></div>
               <WorkspaceDetail
                 className="flex-auto"
-                workspaceId={workspaceId}
+                workspaceId={userWorkspace.workspace.id}
               ></WorkspaceDetail>
             </>
           )}

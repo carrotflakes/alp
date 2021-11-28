@@ -1,3 +1,5 @@
+use crate::schema::objects::workspace_user::WorkspaceUser;
+
 use super::{
     objects::{message::MessageChanged, MutationType},
     MyToken, Storage,
@@ -47,5 +49,20 @@ impl SubscriptionRoot {
                 },
                 id: event.id.into(),
             }))
+    }
+
+    async fn users_in_workspace(
+        &self,
+        ctx: &Context<'_>,
+        workspace_id: ID,
+    ) -> async_graphql::Result<impl Stream<Item = WorkspaceUser>> {
+        let workspace_id = workspace_id.parse().unwrap();
+        let token = ctx.data_opt::<MyToken>().ok_or("token is required")?;
+        let usecase = &ctx.data_unchecked::<Storage>().usecase;
+        let uid = usecase.varify_token(&token.0)?;
+
+        Ok(usecase
+            .subscribe_workspace_users_in_workspace(&uid.0, workspace_id)
+            .map(|workspace_user| workspace_user.into()))
     }
 }

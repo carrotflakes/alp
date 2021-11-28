@@ -7,6 +7,7 @@ query me {
       code
     }
     workspaces {
+      id
       role
       screenName
       workspace {
@@ -24,6 +25,7 @@ query me {
           }
         }
       }
+      status
     }
   }
 }

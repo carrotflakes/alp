@@ -5,8 +5,8 @@ use std::sync::Arc;
 use crate::{
     auth::{Authorize, UID},
     domain::{
-        Message, MessageChanged, MutationType, Role, Room, User, Workspace, WorkspaceInvitation,
-        WorkspaceUser,
+        Message, MessageChanged, MutationType, Role, Room, User, UserStatus, Workspace,
+        WorkspaceInvitation, WorkspaceUser,
     },
     repository::Repository,
     simple_broker::SimpleBroker,
@@ -135,6 +135,23 @@ impl Usecase {
         })
     }
 
+    pub fn subscribe_workspace_users_in_workspace(
+        &self,
+        uid: &str,
+        workspace_id: usize,
+    ) -> impl Stream<Item = WorkspaceUser> {
+        //TODO
+        SimpleBroker::<crate::subscribe::WorkspaceUserUpdate>::subscribe().filter_map(
+            move |workspace_user_update| async move {
+                if workspace_user_update.workspace_user.workspace_id != workspace_id {
+                    None
+                } else {
+                    Some(workspace_user_update.workspace_user)
+                }
+            },
+        )
+    }
+
     pub fn get_room(&self, id: usize) -> Result<Room> {
         self.repository
             .get_room(id as i32)
@@ -193,6 +210,10 @@ impl Usecase {
     }
 
     pub fn create_workspace(&self, uid: &str, code: &str) -> Result<Workspace> {
+        if code.len() < 3 {
+            return Err(format!("code is too short"));
+        }
+
         if let Some(user) = self.find_user_by_uid(uid)? {
             let workspace = self
                 .repository
@@ -280,6 +301,18 @@ impl Usecase {
             .map_err(|x| x.to_string())?;
         self.repository
             .remove_user_workspace(user.id as i32, workspace_id as i32)
+            .map_err(|x| x.to_string())
+    }
+
+    pub fn update_user_status(
+        &self,
+        token: &str,
+        workspace_user_id: usize,
+        user_status: UserStatus,
+    ) -> Result<()> {
+        let uid = self.varify_token(token)?;
+        self.repository
+            .upsert_user_status(workspace_user_id, user_status)
             .map_err(|x| x.to_string())
     }
 

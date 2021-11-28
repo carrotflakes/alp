@@ -1,7 +1,7 @@
 use crate::schema::{MyToken, Storage};
 
 use super::{role::Role, user::User, workspace::Workspace};
-use async_graphql::{ComplexObject, Context, Result, SimpleObject, ID};
+use async_graphql::{ComplexObject, Context, Enum, Result, SimpleObject, ID};
 
 #[derive(Clone, SimpleObject)]
 #[graphql(complex)]
@@ -46,6 +46,18 @@ impl WorkspaceUser {
             .map(User::from)
             .map_err(|x| x.into())
     }
+
+    async fn status(&self, ctx: &Context<'_>) -> Result<UserStatus> {
+        let usecase = &ctx.data_unchecked::<Storage>().usecase;
+        usecase
+            .repository
+            .get_user_status(self.id)
+            .map(|status| match status {
+                crate::domain::UserStatus::Online => UserStatus::Online,
+                crate::domain::UserStatus::Offline => UserStatus::Offline,
+            })
+            .map_err(|x| x.to_string().into())
+    }
 }
 
 impl From<crate::domain::WorkspaceUser> for WorkspaceUser {
@@ -56,6 +68,30 @@ impl From<crate::domain::WorkspaceUser> for WorkspaceUser {
             user_id: wu.user_id,
             role: wu.role.into(),
             screen_name: wu.screen_name,
+        }
+    }
+}
+
+#[derive(Enum, Eq, PartialEq, Copy, Clone)]
+pub enum UserStatus {
+    Online,
+    Offline,
+}
+
+impl From<crate::domain::UserStatus> for UserStatus {
+    fn from(u: crate::domain::UserStatus) -> Self {
+        match u {
+            crate::domain::UserStatus::Online => UserStatus::Online,
+            crate::domain::UserStatus::Offline => UserStatus::Offline,
+        }
+    }
+}
+
+impl Into<crate::domain::UserStatus> for UserStatus {
+    fn into(self) -> crate::domain::UserStatus {
+        match self {
+            UserStatus::Online => crate::domain::UserStatus::Online,
+            UserStatus::Offline => crate::domain::UserStatus::Offline,
         }
     }
 }

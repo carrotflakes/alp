@@ -3,8 +3,13 @@ use async_graphql::{Context, Object, Result, ID};
 
 use super::{
     objects::{
-        invitation::WorkspaceInvitation, message::Message, role::Role, room::Room, user::User,
-        workspace::Workspace, workspace_user::WorkspaceUser,
+        invitation::WorkspaceInvitation,
+        message::Message,
+        role::Role,
+        room::Room,
+        user::User,
+        workspace::Workspace,
+        workspace_user::{UserStatus, WorkspaceUser},
     },
     res, MyToken,
 };
@@ -89,5 +94,19 @@ impl MutationRoot {
         let user_token = ctx.data_opt::<MyToken>().ok_or("token is required")?;
         let usecase = &ctx.data_unchecked::<Storage>().usecase;
         res(usecase.accept_invitation(&user_token.0, &token))
+    }
+
+    async fn update_user_status(
+        &self,
+        ctx: &Context<'_>,
+        workspace_user_id: ID,
+        user_status: UserStatus,
+    ) -> Result<bool> {
+        let token = ctx.data_opt::<MyToken>().ok_or("token is required")?;
+        let workspace_user_id = workspace_user_id.parse().unwrap();
+        let usecase = &ctx.data_unchecked::<Storage>().usecase;
+        res(usecase
+            .update_user_status(&token.0, workspace_user_id, user_status.into())
+            .map(|_| true))
     }
 }

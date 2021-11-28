@@ -1,0 +1,3 @@
+mutation updateUserStatus($workspaceUserId: ID!, $userStatus: UserStatus!) {
+  updateUserStatus(workspaceUserId: $workspaceUserId, userStatus: $userStatus)
+}

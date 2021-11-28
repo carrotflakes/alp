@@ -1,9 +1,9 @@
-import { useContext, useEffect, VFC } from "react";
-import { AuthContext } from "../../context/auth";
-import { useCreateUserMutation, useMeQuery } from "../../generated/graphql";
 import firebase from "firebase";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useContext, useEffect, VFC } from "react";
+import { AuthContext } from "../../context/auth";
+import { useCreateUserMutation, useMeQuery } from "../../generated/graphql";
 
 export const Header: VFC<{ className?: string }> = ({ className = "" }) => {
   const { currentUser } = useContext(AuthContext);

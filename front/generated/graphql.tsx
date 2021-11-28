@@ -1,6 +1,7 @@
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
+export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
@@ -13,7 +14,6 @@ export type Scalars = {
   Int: number;
   Float: number;
 };
-
 
 export type IntConnection = {
   __typename?: 'IntConnection';
@@ -76,6 +76,7 @@ export type MutationRoot = {
   joinToWorkspace: Scalars['Boolean'];
   leaveFromWorkspace: Scalars['Boolean'];
   postMessage: Message;
+  updateUserStatus: Scalars['Boolean'];
 };
 
 
@@ -129,6 +130,12 @@ export type MutationRootPostMessageArgs = {
   text: Scalars['String'];
 };
 
+
+export type MutationRootUpdateUserStatusArgs = {
+  userStatus: UserStatus;
+  workspaceUserId: Scalars['ID'];
+};
+
 export enum MutationType {
   Created = 'CREATED',
   Deleted = 'DELETED'
@@ -158,19 +165,19 @@ export type QueryRoot = {
 
 
 export type QueryRootMessagesArgs = {
-  after?: Maybe<Scalars['String']>;
-  before?: Maybe<Scalars['String']>;
-  first?: Maybe<Scalars['Int']>;
-  last?: Maybe<Scalars['Int']>;
+  after?: InputMaybe<Scalars['String']>;
+  before?: InputMaybe<Scalars['String']>;
+  first?: InputMaybe<Scalars['Int']>;
+  last?: InputMaybe<Scalars['Int']>;
   roomId: Scalars['ID'];
 };
 
 
 export type QueryRootNumbersArgs = {
-  after?: Maybe<Scalars['String']>;
-  before?: Maybe<Scalars['String']>;
-  first?: Maybe<Scalars['Int']>;
-  last?: Maybe<Scalars['Int']>;
+  after?: InputMaybe<Scalars['String']>;
+  before?: InputMaybe<Scalars['String']>;
+  first?: InputMaybe<Scalars['Int']>;
+  last?: InputMaybe<Scalars['Int']>;
 };
 
 
@@ -192,16 +199,17 @@ export type Room = {
 
 
 export type RoomMessagesArgs = {
-  after?: Maybe<Scalars['String']>;
-  before?: Maybe<Scalars['String']>;
-  first?: Maybe<Scalars['Int']>;
-  last?: Maybe<Scalars['Int']>;
+  after?: InputMaybe<Scalars['String']>;
+  before?: InputMaybe<Scalars['String']>;
+  first?: InputMaybe<Scalars['Int']>;
+  last?: InputMaybe<Scalars['Int']>;
 };
 
 export type SubscriptionRoot = {
   __typename?: 'SubscriptionRoot';
   interval: Scalars['Int'];
   messages: MessageChanged;
+  usersInWorkspace: WorkspaceUser;
 };
 
 
@@ -211,8 +219,13 @@ export type SubscriptionRootIntervalArgs = {
 
 
 export type SubscriptionRootMessagesArgs = {
-  mutationType?: Maybe<MutationType>;
+  mutationType?: InputMaybe<MutationType>;
   roomId: Scalars['ID'];
+};
+
+
+export type SubscriptionRootUsersInWorkspaceArgs = {
+  workspaceId: Scalars['ID'];
 };
 
 export type User = {
@@ -229,6 +242,11 @@ export type User = {
 export type UserRoomArgs = {
   id: Scalars['ID'];
 };
+
+export enum UserStatus {
+  Offline = 'OFFLINE',
+  Online = 'ONLINE'
+}
 
 export type Workspace = {
   __typename?: 'Workspace';
@@ -252,6 +270,7 @@ export type WorkspaceUser = {
   id: Scalars['ID'];
   role: Role;
   screenName: Scalars['String'];
+  status: UserStatus;
   user: User;
   userId: Scalars['ID'];
   workspace: Workspace;
@@ -263,132 +282,71 @@ export type AcceptInvitationMutationVariables = Exact<{
 }>;
 
 
-export type AcceptInvitationMutation = (
-  { __typename?: 'MutationRoot' }
-  & { acceptInvitation: (
-    { __typename?: 'WorkspaceUser' }
-    & { workspace: (
-      { __typename?: 'Workspace' }
-      & Pick<Workspace, 'id'>
-    ) }
-  ) }
-);
+export type AcceptInvitationMutation = { __typename?: 'MutationRoot', acceptInvitation: { __typename?: 'WorkspaceUser', workspace: { __typename?: 'Workspace', id: string } } };
 
 export type WorkspaceQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
 
-export type WorkspaceQuery = (
-  { __typename?: 'QueryRoot' }
-  & { workspace: (
-    { __typename?: 'Workspace' }
-    & { rooms: Array<(
-      { __typename?: 'Room' }
-      & Pick<Room, 'id' | 'code'>
-    )>, users: Array<(
-      { __typename?: 'WorkspaceUser' }
-      & Pick<WorkspaceUser, 'role' | 'screenName'>
-      & { user: (
-        { __typename?: 'User' }
-        & Pick<User, 'id' | 'name'>
-      ) }
-    )> }
-  ) }
-);
+export type WorkspaceQuery = { __typename?: 'QueryRoot', workspace: { __typename?: 'Workspace', rooms: Array<{ __typename?: 'Room', id: string, code: string }>, users: Array<{ __typename?: 'WorkspaceUser', role: Role, screenName: string, status: UserStatus, user: { __typename?: 'User', id: string, name: string } }> } };
 
 export type LeaveFromWorkspaceMutationVariables = Exact<{
   workspaceId: Scalars['ID'];
 }>;
 
 
-export type LeaveFromWorkspaceMutation = (
-  { __typename?: 'MutationRoot' }
-  & Pick<MutationRoot, 'leaveFromWorkspace'>
-);
+export type LeaveFromWorkspaceMutation = { __typename?: 'MutationRoot', leaveFromWorkspace: boolean };
 
 export type InviteMutationVariables = Exact<{
   workspaceId: Scalars['ID'];
 }>;
 
 
-export type InviteMutation = (
-  { __typename?: 'MutationRoot' }
-  & { invite: (
-    { __typename?: 'WorkspaceInvitation' }
-    & Pick<WorkspaceInvitation, 'token'>
-  ) }
-);
+export type InviteMutation = { __typename?: 'MutationRoot', invite: { __typename?: 'WorkspaceInvitation', token: string } };
+
+export type UpdateUserStatusMutationVariables = Exact<{
+  workspaceUserId: Scalars['ID'];
+  userStatus: UserStatus;
+}>;
+
+
+export type UpdateUserStatusMutation = { __typename?: 'MutationRoot', updateUserStatus: boolean };
+
+export type UsersInWorkspaceSubscriptionVariables = Exact<{
+  workspaceId: Scalars['ID'];
+}>;
+
+
+export type UsersInWorkspaceSubscription = { __typename?: 'SubscriptionRoot', usersInWorkspace: { __typename?: 'WorkspaceUser', status: UserStatus, user: { __typename?: 'User', id: string } } };
+
+export type CreateWorkspaceMutationVariables = Exact<{
+  code: Scalars['String'];
+}>;
+
+
+export type CreateWorkspaceMutation = { __typename?: 'MutationRoot', createWorkspace: { __typename?: 'Workspace', id: string } };
 
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = (
-  { __typename?: 'QueryRoot' }
-  & { me: (
-    { __typename?: 'User' }
-    & Pick<User, 'id' | 'name'>
-    & { rooms: Array<(
-      { __typename?: 'Room' }
-      & Pick<Room, 'id' | 'code'>
-    )>, workspaces: Array<(
-      { __typename?: 'WorkspaceUser' }
-      & Pick<WorkspaceUser, 'role' | 'screenName'>
-      & { workspace: (
-        { __typename?: 'Workspace' }
-        & Pick<Workspace, 'id' | 'code'>
-        & { rooms: Array<(
-          { __typename?: 'Room' }
-          & Pick<Room, 'id' | 'code'>
-        )>, users: Array<(
-          { __typename?: 'WorkspaceUser' }
-          & Pick<WorkspaceUser, 'role'>
-          & { user: (
-            { __typename?: 'User' }
-            & Pick<User, 'id' | 'name'>
-          ) }
-        )> }
-      ) }
-    )> }
-  ) }
-);
+export type MeQuery = { __typename?: 'QueryRoot', me: { __typename?: 'User', id: string, name: string, rooms: Array<{ __typename?: 'Room', id: string, code: string }>, workspaces: Array<{ __typename?: 'WorkspaceUser', id: string, role: Role, screenName: string, status: UserStatus, workspace: { __typename?: 'Workspace', id: string, code: string, rooms: Array<{ __typename?: 'Room', id: string, code: string }>, users: Array<{ __typename?: 'WorkspaceUser', role: Role, user: { __typename?: 'User', id: string, name: string } }> } }> } };
 
 export type CreateUserMutationVariables = Exact<{
   name: Scalars['String'];
 }>;
 
 
-export type CreateUserMutation = (
-  { __typename?: 'MutationRoot' }
-  & { createUser: (
-    { __typename?: 'User' }
-    & Pick<User, 'id' | 'uid' | 'name'>
-  ) }
-);
+export type CreateUserMutation = { __typename?: 'MutationRoot', createUser: { __typename?: 'User', id: string, uid: string, name: string } };
 
 export type MessagesQueryVariables = Exact<{
   roomId: Scalars['ID'];
   last: Scalars['Int'];
-  startCursor?: Maybe<Scalars['String']>;
+  startCursor?: InputMaybe<Scalars['String']>;
 }>;
 
 
-export type MessagesQuery = (
-  { __typename?: 'QueryRoot' }
-  & { messages: (
-    { __typename?: 'MessageConnection' }
-    & { pageInfo: (
-      { __typename?: 'PageInfo' }
-      & Pick<PageInfo, 'startCursor' | 'endCursor' | 'hasPreviousPage' | 'hasNextPage'>
-    ), edges?: Maybe<Array<Maybe<(
-      { __typename?: 'MessageEdge' }
-      & { node: (
-        { __typename?: 'Message' }
-        & MyMessageFragment
-      ) }
-    )>>> }
-  ) }
-);
+export type MessagesQuery = { __typename?: 'QueryRoot', messages: { __typename?: 'MessageConnection', pageInfo: { __typename?: 'PageInfo', startCursor?: string | null | undefined, endCursor?: string | null | undefined, hasPreviousPage: boolean, hasNextPage: boolean }, edges?: Array<{ __typename?: 'MessageEdge', node: { __typename?: 'Message', id: string, text: string, createdAt: string, user: { __typename?: 'User', name: string } } } | null | undefined> | null | undefined } };
 
 export type PostMessageMutationVariables = Exact<{
   roomId: Scalars['ID'];
@@ -396,42 +354,16 @@ export type PostMessageMutationVariables = Exact<{
 }>;
 
 
-export type PostMessageMutation = (
-  { __typename?: 'MutationRoot' }
-  & { postMessage: (
-    { __typename?: 'Message' }
-    & Pick<Message, 'id' | 'text' | 'createdAt'>
-    & { user: (
-      { __typename?: 'User' }
-      & Pick<User, 'id' | 'name'>
-    ) }
-  ) }
-);
+export type PostMessageMutation = { __typename?: 'MutationRoot', postMessage: { __typename?: 'Message', id: string, text: string, createdAt: string, user: { __typename?: 'User', id: string, name: string } } };
 
 export type MessageAddedSubscriptionVariables = Exact<{
   roomId: Scalars['ID'];
 }>;
 
 
-export type MessageAddedSubscription = (
-  { __typename?: 'SubscriptionRoot' }
-  & { messages: (
-    { __typename?: 'MessageChanged' }
-    & { message: (
-      { __typename?: 'Message' }
-      & MyMessageFragment
-    ) }
-  ) }
-);
+export type MessageAddedSubscription = { __typename?: 'SubscriptionRoot', messages: { __typename?: 'MessageChanged', message: { __typename?: 'Message', id: string, text: string, createdAt: string, user: { __typename?: 'User', name: string } } } };
 
-export type MyMessageFragment = (
-  { __typename?: 'Message' }
-  & Pick<Message, 'id' | 'text' | 'createdAt'>
-  & { user: (
-    { __typename?: 'User' }
-    & Pick<User, 'name'>
-  ) }
-);
+export type MyMessageFragment = { __typename?: 'Message', id: string, text: string, createdAt: string, user: { __typename?: 'User', name: string } };
 
 export const MyMessageFragmentDoc = gql`
     fragment MyMessage on Message {
@@ -492,6 +424,7 @@ export const WorkspaceDocument = gql`
         id
         name
       }
+      status
     }
   }
 }
@@ -588,6 +521,104 @@ export function useInviteMutation(baseOptions?: Apollo.MutationHookOptions<Invit
 export type InviteMutationHookResult = ReturnType<typeof useInviteMutation>;
 export type InviteMutationResult = Apollo.MutationResult<InviteMutation>;
 export type InviteMutationOptions = Apollo.BaseMutationOptions<InviteMutation, InviteMutationVariables>;
+export const UpdateUserStatusDocument = gql`
+    mutation updateUserStatus($workspaceUserId: ID!, $userStatus: UserStatus!) {
+  updateUserStatus(workspaceUserId: $workspaceUserId, userStatus: $userStatus)
+}
+    `;
+export type UpdateUserStatusMutationFn = Apollo.MutationFunction<UpdateUserStatusMutation, UpdateUserStatusMutationVariables>;
+
+/**
+ * __useUpdateUserStatusMutation__
+ *
+ * To run a mutation, you first call `useUpdateUserStatusMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateUserStatusMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateUserStatusMutation, { data, loading, error }] = useUpdateUserStatusMutation({
+ *   variables: {
+ *      workspaceUserId: // value for 'workspaceUserId'
+ *      userStatus: // value for 'userStatus'
+ *   },
+ * });
+ */
+export function useUpdateUserStatusMutation(baseOptions?: Apollo.MutationHookOptions<UpdateUserStatusMutation, UpdateUserStatusMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateUserStatusMutation, UpdateUserStatusMutationVariables>(UpdateUserStatusDocument, options);
+      }
+export type UpdateUserStatusMutationHookResult = ReturnType<typeof useUpdateUserStatusMutation>;
+export type UpdateUserStatusMutationResult = Apollo.MutationResult<UpdateUserStatusMutation>;
+export type UpdateUserStatusMutationOptions = Apollo.BaseMutationOptions<UpdateUserStatusMutation, UpdateUserStatusMutationVariables>;
+export const UsersInWorkspaceDocument = gql`
+    subscription usersInWorkspace($workspaceId: ID!) {
+  usersInWorkspace(workspaceId: $workspaceId) {
+    user {
+      id
+    }
+    status
+  }
+}
+    `;
+
+/**
+ * __useUsersInWorkspaceSubscription__
+ *
+ * To run a query within a React component, call `useUsersInWorkspaceSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useUsersInWorkspaceSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useUsersInWorkspaceSubscription({
+ *   variables: {
+ *      workspaceId: // value for 'workspaceId'
+ *   },
+ * });
+ */
+export function useUsersInWorkspaceSubscription(baseOptions: Apollo.SubscriptionHookOptions<UsersInWorkspaceSubscription, UsersInWorkspaceSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<UsersInWorkspaceSubscription, UsersInWorkspaceSubscriptionVariables>(UsersInWorkspaceDocument, options);
+      }
+export type UsersInWorkspaceSubscriptionHookResult = ReturnType<typeof useUsersInWorkspaceSubscription>;
+export type UsersInWorkspaceSubscriptionResult = Apollo.SubscriptionResult<UsersInWorkspaceSubscription>;
+export const CreateWorkspaceDocument = gql`
+    mutation createWorkspace($code: String!) {
+  createWorkspace(code: $code) {
+    id
+  }
+}
+    `;
+export type CreateWorkspaceMutationFn = Apollo.MutationFunction<CreateWorkspaceMutation, CreateWorkspaceMutationVariables>;
+
+/**
+ * __useCreateWorkspaceMutation__
+ *
+ * To run a mutation, you first call `useCreateWorkspaceMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateWorkspaceMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createWorkspaceMutation, { data, loading, error }] = useCreateWorkspaceMutation({
+ *   variables: {
+ *      code: // value for 'code'
+ *   },
+ * });
+ */
+export function useCreateWorkspaceMutation(baseOptions?: Apollo.MutationHookOptions<CreateWorkspaceMutation, CreateWorkspaceMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateWorkspaceMutation, CreateWorkspaceMutationVariables>(CreateWorkspaceDocument, options);
+      }
+export type CreateWorkspaceMutationHookResult = ReturnType<typeof useCreateWorkspaceMutation>;
+export type CreateWorkspaceMutationResult = Apollo.MutationResult<CreateWorkspaceMutation>;
+export type CreateWorkspaceMutationOptions = Apollo.BaseMutationOptions<CreateWorkspaceMutation, CreateWorkspaceMutationVariables>;
 export const MeDocument = gql`
     query me {
   me {
@@ -598,6 +629,7 @@ export const MeDocument = gql`
       code
     }
     workspaces {
+      id
       role
       screenName
       workspace {
@@ -615,6 +647,7 @@ export const MeDocument = gql`
           }
         }
       }
+      status
     }
   }
 }

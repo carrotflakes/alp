@@ -51,11 +51,36 @@ async fn index_ws(
     })
 }
 
-#[actix_rt::main]
+#[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let conn = new_pool().unwrap();
+    let db_pool = new_pool().unwrap();
+    let redis_client = new_redis().await.unwrap();
     let auth = Authorize::new().await;
-    let usecase = Usecase::new(auth, Arc::new(Repository::new(conn)));
+
+    let repository = Arc::new(Repository::new(db_pool, redis_client.clone()));
+
+    std::thread::spawn({
+        // TODO: async
+        let redis_client = redis_client.clone();
+        let repository = repository.clone();
+        || alp::subscribe::incoming_subscribe(redis_client, repository)
+    });
+
+    // actix_web::rt::spawn({
+    //     let redis_client = redis_client.clone();
+    //     alp::subscribe::incoming_subscribe(redis_client)
+    // });
+
+    // actix_web::rt::Arbiter::spawn_fn({
+    //     let redis_client = redis_client.clone();
+    //     move || alp::subscribe::incoming_subscribe(redis_client)
+    // });
+
+    // actix_web::rt::time::delay_for(std::time::Duration::from_secs(1)).await;
+    // use redis::Commands;
+    // redis_client.get_connection().unwrap().publish::<_, _, ()>("foo", "hey").unwrap();
+
+    let usecase = Usecase::new(auth, repository);
     let schema = new_schema(usecase);
 
     println!("Playground: http://localhost:8000");
@@ -76,6 +101,19 @@ async fn main() -> std::io::Result<()> {
     .bind("0.0.0.0:8000")?
     .run()
     .await
+}
+
+async fn new_redis() -> Result<Arc<redis::Client>, String> {
+    let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL is required");
+
+    let redis_client = redis::Client::open(redis_url).map_err(|x| x.to_string())?;
+    // use redis::Commands;
+    // let mut redis_conn = redis_client.get_connection().map_err(|x| x.to_string())?;
+    // redis_conn.set("foo", "bar").map_err(|x| x.to_string())?;
+    // dbg!(redis_conn
+    //     .get::<&str, String>("foo")
+    //     .map_err(|x| x.to_string())?);
+    Ok(Arc::new(redis_client))
 }
 
 fn new_cors() -> Cors {

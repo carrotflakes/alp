@@ -1,0 +1,14 @@
+subscription usersInWorkspace($workspaceId: ID!) {
+  usersInWorkspace(workspaceId: $workspaceId) {
+    user {
+      id
+    }
+    status
+  }
+}
+
+mutation createWorkspace($code: String!) {
+  createWorkspace(code: $code) {
+    id
+  }
+}

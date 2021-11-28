@@ -1,6 +1,6 @@
 import { VFC } from "react";
-import { currentRoomVar, currentWorkspaceVar } from "../../cache";
-import { useMeQuery } from "../../generated/graphql";
+import { currentRoomVar, currentWorkspaceVar } from "../../vars";
+import { useMeQuery, WorkspaceUser } from "../../generated/graphql";
 
 type props = {};
 
@@ -13,7 +13,7 @@ export const RoomList: VFC<{ className?: string }> = ({ className = "" }) => {
           <div
             className="cursor-pointer"
             onClick={() => {
-              currentWorkspaceVar(w.workspace.id);
+              currentWorkspaceVar(w as WorkspaceUser);
               currentRoomVar(null);
             }}
             key={w.workspace.id}

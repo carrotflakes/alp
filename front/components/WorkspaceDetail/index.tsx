@@ -1,5 +1,10 @@
 import { VFC } from "react";
-import { useInviteMutation, useLeaveFromWorkspaceMutation, useWorkspaceQuery } from "../../generated/graphql";
+import {
+  useInviteMutation,
+  useLeaveFromWorkspaceMutation,
+  useWorkspaceQuery,
+} from "../../generated/graphql";
+import { useSubscribeUsersInWorkspace } from "../../hooks/subscribeUsersInWorkspace";
 
 type props = {
   className?: string;
@@ -13,13 +18,14 @@ export const WorkspaceDetail: VFC<props> = ({
   const { data } = useWorkspaceQuery({ variables: { id: workspaceId } });
   const [inviteMut] = useInviteMutation();
   const [leaveMut] = useLeaveFromWorkspaceMutation();
+  useSubscribeUsersInWorkspace(workspaceId);
 
   return (
     <div className={className + " p-2"}>
       users:
       {data?.workspace.users.map((r) => (
         <div className="cursor-pointer" key={r.user.id}>
-          - {r.user.name} ({r.role})
+          - {r.user.name} ({r.role}) ({r.status})
         </div>
       ))}
       <br />
