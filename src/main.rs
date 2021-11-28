@@ -117,10 +117,17 @@ async fn new_redis() -> Result<Arc<redis::Client>, String> {
 }
 
 fn new_cors() -> Cors {
-    Cors::default()
-        .allow_any_origin()
+    let cors_origin = std::env::var("CORS_ORIGIN").unwrap_or("*".to_owned());
+
+    let mut cors = Cors::default()
         .allowed_methods(vec!["GET", "POST"])
         .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
         .allowed_header(http::header::CONTENT_TYPE)
-        .max_age(3600)
+        .max_age(3600);
+    cors = if cors_origin == "*" {
+        cors.allowed_origin(&cors_origin)
+    } else {
+        cors.allow_any_origin()
+    };
+    cors
 }

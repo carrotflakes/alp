@@ -11,6 +11,7 @@ services:
     environment:
       DATABASE_URL: "postgres://root:root@db"
       REDIS_URL: "redis://redis:6379"
+      CORS_ORIGIN: ${CORS_ORIGIN:-"*"}
     depends_on:
       - db
       - redis
