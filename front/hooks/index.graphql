@@ -1,5 +1,6 @@
 subscription usersInWorkspace($workspaceId: ID!) {
   usersInWorkspace(workspaceId: $workspaceId) {
+    id
     user {
       id
     }

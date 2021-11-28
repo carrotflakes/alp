@@ -1,0 +1,20 @@
+.workspaceSelector {
+  position: relative;
+  display: inline-block;
+  user-select: none;
+}
+
+.workspaceSelected {
+  cursor: pointer;
+}
+
+.workspaceList {
+  position: absolute;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+.workspaceListItem {
+  cursor: pointer;
+}

@@ -8,12 +8,12 @@ export const StatusManageProvider: FC = ({ children }) => {
   const loggedIn = useReactiveVar(loggedInVar);
   const workspaceUser = useReactiveVar(currentWorkspaceVar);
 
-  const switchOffline = useCallback(
-    (workspaceUserId: string) => {
-      updateUserStatus({
+  const switchStatus = useCallback(
+    (workspaceUserId: string, userStatus: UserStatus) => {
+      return updateUserStatus({
         variables: {
           workspaceUserId,
-          userStatus: UserStatus.Offline,
+          userStatus,
         },
       });
     },
@@ -25,30 +25,21 @@ export const StatusManageProvider: FC = ({ children }) => {
       return;
     }
 
-    updateUserStatus({
-      variables: {
-        workspaceUserId: workspaceUser.id,
-        userStatus: UserStatus.Online,
-      },
-    });
+    switchStatus(workspaceUser.id, UserStatus.Online);
     const intervalId = setInterval(async () => {
-      await updateUserStatus({
-        variables: {
-          workspaceUserId: workspaceUser.id,
-          userStatus: UserStatus.Online,
-        },
-      });
+      await switchStatus(workspaceUser.id, UserStatus.Online);
     }, 1000 * 60 * 9); // 9 minute
 
     const beforeunload = () => {
-      switchOffline(workspaceUser.id);
+      switchStatus(workspaceUser.id, UserStatus.Offline);
     };
     window.addEventListener("beforeunload", beforeunload);
     return () => {
       clearInterval(intervalId);
+      switchStatus(workspaceUser.id, UserStatus.Offline);
       window.removeEventListener("beforeunload", beforeunload);
     };
-  }, [loggedIn, switchOffline, workspaceUser]);
+  }, [loggedIn, switchStatus, workspaceUser]);
 
   return <>{children}</>;
 };
