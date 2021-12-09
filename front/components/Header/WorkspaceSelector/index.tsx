@@ -1,14 +1,15 @@
 import { useReactiveVar } from "@apollo/client";
 import { useState, VFC } from "react";
 import { useMeQuery, WorkspaceUser } from "../../../generated/graphql";
-import { currentWorkspaceVar } from "../../../vars";
+import { currentWorkspaceVar, loggedInVar } from "../../../vars";
 import styles from "./index.module.css";
 import cn from "classnames";
 
 export const WorkspaceSelector: VFC<{ className?: string }> = ({
   className = "",
 }) => {
-  const meRes = useMeQuery();
+  const loggedIn = useReactiveVar(loggedInVar);
+  const meRes = useMeQuery({ skip: !loggedIn });
   const workspaceUser = useReactiveVar(currentWorkspaceVar);
   const [isOpened, setIsOpened] = useState(false);
 

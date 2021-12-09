@@ -1,0 +1,11 @@
+query workspaceUsers($workspaceId: ID!) {
+  workspace(id: $workspaceId) {
+    id
+    users {
+      id
+      role
+      screenName
+      status
+    }
+  }
+}
