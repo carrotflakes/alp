@@ -76,6 +76,7 @@ export type MutationRoot = {
   joinToWorkspace: Scalars['Boolean'];
   leaveFromWorkspace: Scalars['Boolean'];
   postMessage: Message;
+  updateUserProfile: WorkspaceUser;
   updateUserStatus: Scalars['Boolean'];
 };
 
@@ -128,6 +129,12 @@ export type MutationRootLeaveFromWorkspaceArgs = {
 export type MutationRootPostMessageArgs = {
   roomId: Scalars['ID'];
   text: Scalars['String'];
+};
+
+
+export type MutationRootUpdateUserProfileArgs = {
+  profile: UpdateUserProfile;
+  workspaceUserId: Scalars['ID'];
 };
 
 
@@ -228,6 +235,10 @@ export type SubscriptionRootUsersInWorkspaceArgs = {
   workspaceId: Scalars['ID'];
 };
 
+export type UpdateUserProfile = {
+  screenName: Scalars['String'];
+};
+
 export type User = {
   __typename?: 'User';
   id: Scalars['ID'];
@@ -312,6 +323,14 @@ export type InviteMutationVariables = Exact<{
 
 export type InviteMutation = { __typename?: 'MutationRoot', invite: { __typename?: 'WorkspaceInvitation', token: string } };
 
+export type UpdateUserProfileMutationVariables = Exact<{
+  workspaceUserId: Scalars['ID'];
+  screenName: Scalars['String'];
+}>;
+
+
+export type UpdateUserProfileMutation = { __typename?: 'MutationRoot', updateUserProfile: { __typename?: 'WorkspaceUser', id: string } };
+
 export type UpdateUserStatusMutationVariables = Exact<{
   workspaceUserId: Scalars['ID'];
   userStatus: UserStatus;
@@ -337,7 +356,7 @@ export type CreateWorkspaceMutation = { __typename?: 'MutationRoot', createWorks
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'QueryRoot', me: { __typename?: 'User', id: string, name: string, rooms: Array<{ __typename?: 'Room', id: string, code: string }>, workspaces: Array<{ __typename?: 'WorkspaceUser', id: string, role: Role, screenName: string, workspaceId: string, status: UserStatus, workspace: { __typename?: 'Workspace', id: string, code: string, rooms: Array<{ __typename?: 'Room', id: string, code: string }>, users: Array<{ __typename?: 'WorkspaceUser', role: Role, user: { __typename?: 'User', id: string, name: string } }> } }> } };
+export type MeQuery = { __typename?: 'QueryRoot', me: { __typename?: 'User', id: string, name: string, rooms: Array<{ __typename?: 'Room', id: string, code: string }>, workspaces: Array<{ __typename?: 'WorkspaceUser', id: string, role: Role, screenName: string, workspaceId: string, userId: string, status: UserStatus, workspace: { __typename?: 'Workspace', id: string, code: string, rooms: Array<{ __typename?: 'Room', id: string, code: string }>, users: Array<{ __typename?: 'WorkspaceUser', role: Role, userId: string, user: { __typename?: 'User', id: string, name: string } }> } }> } };
 
 export type CreateUserMutationVariables = Exact<{
   name: Scalars['String'];
@@ -569,6 +588,43 @@ export function useInviteMutation(baseOptions?: Apollo.MutationHookOptions<Invit
 export type InviteMutationHookResult = ReturnType<typeof useInviteMutation>;
 export type InviteMutationResult = Apollo.MutationResult<InviteMutation>;
 export type InviteMutationOptions = Apollo.BaseMutationOptions<InviteMutation, InviteMutationVariables>;
+export const UpdateUserProfileDocument = gql`
+    mutation updateUserProfile($workspaceUserId: ID!, $screenName: String!) {
+  updateUserProfile(
+    workspaceUserId: $workspaceUserId
+    profile: {screenName: $screenName}
+  ) {
+    id
+  }
+}
+    `;
+export type UpdateUserProfileMutationFn = Apollo.MutationFunction<UpdateUserProfileMutation, UpdateUserProfileMutationVariables>;
+
+/**
+ * __useUpdateUserProfileMutation__
+ *
+ * To run a mutation, you first call `useUpdateUserProfileMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateUserProfileMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateUserProfileMutation, { data, loading, error }] = useUpdateUserProfileMutation({
+ *   variables: {
+ *      workspaceUserId: // value for 'workspaceUserId'
+ *      screenName: // value for 'screenName'
+ *   },
+ * });
+ */
+export function useUpdateUserProfileMutation(baseOptions?: Apollo.MutationHookOptions<UpdateUserProfileMutation, UpdateUserProfileMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateUserProfileMutation, UpdateUserProfileMutationVariables>(UpdateUserProfileDocument, options);
+      }
+export type UpdateUserProfileMutationHookResult = ReturnType<typeof useUpdateUserProfileMutation>;
+export type UpdateUserProfileMutationResult = Apollo.MutationResult<UpdateUserProfileMutation>;
+export type UpdateUserProfileMutationOptions = Apollo.BaseMutationOptions<UpdateUserProfileMutation, UpdateUserProfileMutationVariables>;
 export const UpdateUserStatusDocument = gql`
     mutation updateUserStatus($workspaceUserId: ID!, $userStatus: UserStatus!) {
   updateUserStatus(workspaceUserId: $workspaceUserId, userStatus: $userStatus)
@@ -682,6 +738,7 @@ export const MeDocument = gql`
       role
       screenName
       workspaceId
+      userId
       workspace {
         id
         code
@@ -691,6 +748,7 @@ export const MeDocument = gql`
         }
         users {
           role
+          userId
           user {
             id
             name

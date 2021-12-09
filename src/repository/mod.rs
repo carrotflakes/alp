@@ -301,6 +301,23 @@ impl Repository {
             .map_err(err)
     }
 
+    pub fn update_user_profile(
+        &self,
+        workspace_user_id: i32,
+        screen_name: &str,
+    ) -> Result<WorkspaceUser> {
+        diesel::update(workspace_users::dsl::workspace_users)
+            .filter(workspace_users::dsl::id.eq(workspace_user_id))
+            .set(workspace_users::dsl::screen_name.eq(screen_name))
+            .execute(&self.get_conn()?)
+            .map(|_| ())
+            .map_err(err)?;
+        workspace_users::dsl::workspace_users
+            .find(workspace_user_id)
+            .first::<WorkspaceUser>(&self.get_conn()?)
+            .map_err(err)
+    }
+
     pub fn upsert_user_status(
         &self,
         workspace_user_id: usize,

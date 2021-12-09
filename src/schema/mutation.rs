@@ -1,5 +1,5 @@
 use crate::schema::Storage;
-use async_graphql::{Context, Object, Result, ID};
+use async_graphql::{Context, InputObject, Object, Result, ID};
 
 use super::{
     objects::{
@@ -96,6 +96,18 @@ impl MutationRoot {
         res(usecase.accept_invitation(&user_token.0, &token))
     }
 
+    async fn update_user_profile(
+        &self,
+        ctx: &Context<'_>,
+        workspace_user_id: ID,
+        profile: UpdateUserProfile,
+    ) -> Result<WorkspaceUser> {
+        let token = ctx.data_opt::<MyToken>().ok_or("token is required")?;
+        let workspace_user_id = workspace_user_id.parse().unwrap();
+        let usecase = &ctx.data_unchecked::<Storage>().usecase;
+        res(usecase.update_user_profile(&token.0, workspace_user_id, &profile.screen_name))
+    }
+
     async fn update_user_status(
         &self,
         ctx: &Context<'_>,
@@ -109,4 +121,9 @@ impl MutationRoot {
             .update_user_status(&token.0, workspace_user_id, user_status.into())
             .map(|_| true))
     }
+}
+
+#[derive(InputObject)]
+pub struct UpdateUserProfile {
+    screen_name: String,
 }
