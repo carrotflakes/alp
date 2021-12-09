@@ -1,10 +1,13 @@
-import { VFC } from "react";
+import { useReactiveVar } from "@apollo/client";
+import { useCallback, useEffect, useState, VFC } from "react";
 import {
   useInviteMutation,
   useLeaveFromWorkspaceMutation,
+  useUpdateUserProfileMutation,
   useWorkspaceQuery,
 } from "../../generated/graphql";
 import { useSubscribeUsersInWorkspace } from "../../hooks/subscribeUsersInWorkspace";
+import { currentWorkspaceVar } from "../../vars";
 
 type props = {
   className?: string;
@@ -20,8 +23,42 @@ export const WorkspaceDetail: VFC<props> = ({
   const [leaveMut] = useLeaveFromWorkspaceMutation();
   useSubscribeUsersInWorkspace(workspaceId);
 
+  const [screenName, setScreenName] = useState("");
+
+  const workspaceUser = useReactiveVar(currentWorkspaceVar);
+  useEffect(() => {
+    const user = data?.workspace.users.find(
+      (u) => u.user.id === workspaceUser?.userId
+    );
+    if (user) {
+      setScreenName(user.screenName);
+    }
+  }, [data, workspaceUser]);
+
+  const [updateUserProfile] = useUpdateUserProfileMutation();
+  const handleUpdateUserProfile = useCallback(() => {
+    if (workspaceUser) {
+      updateUserProfile({
+        variables: {
+          workspaceUserId: workspaceUser.id,
+          screenName,
+        },
+      }).then(() => {
+        console.log("updateUserProfile");
+      });
+    }
+  }, [screenName, workspaceUser]);
+
   return (
     <div className={className + " p-2"}>
+      <div>
+        <input
+          type="text"
+          value={screenName}
+          onChange={(e) => setScreenName(e.target.value)}
+        />
+        <button onClick={handleUpdateUserProfile}>Update</button>
+      </div>
       users:
       {data?.workspace.users.map((r) => (
         <div className="cursor-pointer" key={r.user.id}>

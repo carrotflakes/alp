@@ -2,7 +2,7 @@ import { useState, VFC } from "react";
 import {
   useAcceptInvitationMutation,
   useCreateWorkspaceMutation,
-  useMeQuery,
+  useMeQuery
 } from "../../generated/graphql";
 
 export const MeView: VFC<{ className?: string }> = ({ className = "" }) => {

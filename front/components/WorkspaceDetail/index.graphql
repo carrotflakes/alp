@@ -25,3 +25,12 @@ mutation invite($workspaceId: ID!) {
     token
   }
 }
+
+mutation updateUserProfile($workspaceUserId: ID!, $screenName: String!) {
+  updateUserProfile(
+    workspaceUserId: $workspaceUserId
+    profile: { screenName: $screenName }
+  ) {
+    id
+  }
+}

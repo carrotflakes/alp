@@ -304,6 +304,19 @@ impl Usecase {
             .map_err(|x| x.to_string())
     }
 
+    pub fn update_user_profile(
+        &self,
+        token: &str,
+        workspace_user_id: usize,
+        screen_name: &str,
+    ) -> Result<WorkspaceUser> {
+        let _uid = self.varify_token(token)?;
+        self.repository
+            .update_user_profile(workspace_user_id as i32, screen_name)
+            .map(workspace_user)
+            .map_err(|x| x.to_string())
+    }
+
     pub fn update_user_status(
         &self,
         token: &str,

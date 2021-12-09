@@ -11,6 +11,7 @@ query me {
       role
       screenName
       workspaceId
+      userId
       workspace {
         id
         code
@@ -20,6 +21,7 @@ query me {
         }
         users {
           role
+          userId
           user {
             id
             name
