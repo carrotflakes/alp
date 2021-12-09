@@ -6,6 +6,8 @@ import { AuthContext } from "../../context/auth";
 import { useCreateUserMutation, useMeQuery } from "../../generated/graphql";
 import { WorkspaceSelector } from "./WorkspaceSelector";
 
+import cn from "classnames";
+
 export const Header: VFC<{ className?: string }> = ({ className = "" }) => {
   const { currentUser } = useContext(AuthContext);
   const router = useRouter();
@@ -23,23 +25,25 @@ export const Header: VFC<{ className?: string }> = ({ className = "" }) => {
     }
   }, [currentUser, meRes]);
 
-  if (currentUser && meRes.error) {
-    return <div>Error {meRes.error.message}</div>;
-  }
   return (
-    <div className={className + " p-2"}>
+    <div className={cn("p-2 flex select-none", className)}>
       {currentUser ? (
-        <div>
+        <>
+          <div className="px-2">
+            <Link href="/">ALP</Link>
+          </div>
           <WorkspaceSelector />
-          &nbsp;
-          signed in as{" "}
-          <span onClick={() => router.push("/me")}>
+          <div className="flex-auto"></div>
+          <div className="cursor-pointer" onClick={() => router.push("/me")}>
             {currentUser?.displayName}
-          </span>
-          <span className="ml-6" onClick={() => firebase.auth().signOut()}>
+          </div>
+          <div
+            className="ml-6 cursor-pointer"
+            onClick={() => firebase.auth().signOut()}
+          >
             sign out
-          </span>
-        </div>
+          </div>
+        </>
       ) : (
         <div>
           please <Link href="/signin">sign in</Link>

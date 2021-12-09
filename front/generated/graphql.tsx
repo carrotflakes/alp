@@ -284,6 +284,13 @@ export type AcceptInvitationMutationVariables = Exact<{
 
 export type AcceptInvitationMutation = { __typename?: 'MutationRoot', acceptInvitation: { __typename?: 'WorkspaceUser', workspace: { __typename?: 'Workspace', id: string } } };
 
+export type WorkspaceUsersQueryVariables = Exact<{
+  workspaceId: Scalars['ID'];
+}>;
+
+
+export type WorkspaceUsersQuery = { __typename?: 'QueryRoot', workspace: { __typename?: 'Workspace', id: string, users: Array<{ __typename?: 'WorkspaceUser', id: string, role: Role, screenName: string, status: UserStatus }> } };
+
 export type WorkspaceQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
@@ -318,7 +325,7 @@ export type UsersInWorkspaceSubscriptionVariables = Exact<{
 }>;
 
 
-export type UsersInWorkspaceSubscription = { __typename?: 'SubscriptionRoot', usersInWorkspace: { __typename?: 'WorkspaceUser', status: UserStatus, user: { __typename?: 'User', id: string } } };
+export type UsersInWorkspaceSubscription = { __typename?: 'SubscriptionRoot', usersInWorkspace: { __typename?: 'WorkspaceUser', id: string, status: UserStatus, user: { __typename?: 'User', id: string } } };
 
 export type CreateWorkspaceMutationVariables = Exact<{
   code: Scalars['String'];
@@ -330,7 +337,7 @@ export type CreateWorkspaceMutation = { __typename?: 'MutationRoot', createWorks
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'QueryRoot', me: { __typename?: 'User', id: string, name: string, rooms: Array<{ __typename?: 'Room', id: string, code: string }>, workspaces: Array<{ __typename?: 'WorkspaceUser', id: string, role: Role, screenName: string, status: UserStatus, workspace: { __typename?: 'Workspace', id: string, code: string, rooms: Array<{ __typename?: 'Room', id: string, code: string }>, users: Array<{ __typename?: 'WorkspaceUser', role: Role, user: { __typename?: 'User', id: string, name: string } }> } }> } };
+export type MeQuery = { __typename?: 'QueryRoot', me: { __typename?: 'User', id: string, name: string, rooms: Array<{ __typename?: 'Room', id: string, code: string }>, workspaces: Array<{ __typename?: 'WorkspaceUser', id: string, role: Role, screenName: string, workspaceId: string, status: UserStatus, workspace: { __typename?: 'Workspace', id: string, code: string, rooms: Array<{ __typename?: 'Room', id: string, code: string }>, users: Array<{ __typename?: 'WorkspaceUser', role: Role, user: { __typename?: 'User', id: string, name: string } }> } }> } };
 
 export type CreateUserMutationVariables = Exact<{
   name: Scalars['String'];
@@ -410,6 +417,47 @@ export function useAcceptInvitationMutation(baseOptions?: Apollo.MutationHookOpt
 export type AcceptInvitationMutationHookResult = ReturnType<typeof useAcceptInvitationMutation>;
 export type AcceptInvitationMutationResult = Apollo.MutationResult<AcceptInvitationMutation>;
 export type AcceptInvitationMutationOptions = Apollo.BaseMutationOptions<AcceptInvitationMutation, AcceptInvitationMutationVariables>;
+export const WorkspaceUsersDocument = gql`
+    query workspaceUsers($workspaceId: ID!) {
+  workspace(id: $workspaceId) {
+    id
+    users {
+      id
+      role
+      screenName
+      status
+    }
+  }
+}
+    `;
+
+/**
+ * __useWorkspaceUsersQuery__
+ *
+ * To run a query within a React component, call `useWorkspaceUsersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useWorkspaceUsersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useWorkspaceUsersQuery({
+ *   variables: {
+ *      workspaceId: // value for 'workspaceId'
+ *   },
+ * });
+ */
+export function useWorkspaceUsersQuery(baseOptions: Apollo.QueryHookOptions<WorkspaceUsersQuery, WorkspaceUsersQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<WorkspaceUsersQuery, WorkspaceUsersQueryVariables>(WorkspaceUsersDocument, options);
+      }
+export function useWorkspaceUsersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<WorkspaceUsersQuery, WorkspaceUsersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<WorkspaceUsersQuery, WorkspaceUsersQueryVariables>(WorkspaceUsersDocument, options);
+        }
+export type WorkspaceUsersQueryHookResult = ReturnType<typeof useWorkspaceUsersQuery>;
+export type WorkspaceUsersLazyQueryHookResult = ReturnType<typeof useWorkspaceUsersLazyQuery>;
+export type WorkspaceUsersQueryResult = Apollo.QueryResult<WorkspaceUsersQuery, WorkspaceUsersQueryVariables>;
 export const WorkspaceDocument = gql`
     query workspace($id: ID!) {
   workspace(id: $id) {
@@ -556,6 +604,7 @@ export type UpdateUserStatusMutationOptions = Apollo.BaseMutationOptions<UpdateU
 export const UsersInWorkspaceDocument = gql`
     subscription usersInWorkspace($workspaceId: ID!) {
   usersInWorkspace(workspaceId: $workspaceId) {
+    id
     user {
       id
     }
@@ -632,6 +681,7 @@ export const MeDocument = gql`
       id
       role
       screenName
+      workspaceId
       workspace {
         id
         code

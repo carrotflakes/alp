@@ -10,6 +10,7 @@ query me {
       id
       role
       screenName
+      workspaceId
       workspace {
         id
         code
