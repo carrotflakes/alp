@@ -5,7 +5,10 @@
 }
 
 .workspaceSelected {
+  padding: 3px 8px;
   cursor: pointer;
+  border-left: solid 1px #ccc;
+  border-right: solid 1px #ccc;
 }
 
 .workspaceList {
@@ -16,5 +19,10 @@
 }
 
 .workspaceListItem {
+  padding: 3px 8px;
   cursor: pointer;
+}
+
+.workspaceListItem:hover {
+  background: #eee;
 }

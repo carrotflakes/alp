@@ -29,7 +29,7 @@ export const Header: VFC<{ className?: string }> = ({ className = "" }) => {
     <div className={cn("p-2 flex select-none", className)}>
       {currentUser ? (
         <>
-          <div className="px-2">
+          <div className="px-2 text-xl">
             <Link href="/">ALP</Link>
           </div>
           <WorkspaceSelector />
