@@ -2,12 +2,12 @@ version: "3.9"
 services:
   server:
     build:
-      context: .
+      context: ./server
       dockerfile: Dockerfile.dev
     ports:
       - 8000:8000
     volumes:
-      - ./src:/app/src
+      - ./server/src:/app/src
     environment:
       DATABASE_URL: "postgres://root:root@db"
       REDIS_URL: "redis://redis:6379"
