@@ -16,15 +16,15 @@ services:
       - db
       - redis
   front:
-    build:
-      context: ./front
-      dockerfile: Dockerfile.dev
+    image: "node:15"
+    working_dir: /home/node/app
+    command: bash -c "yarn && yarn dev"
     ports:
       - 3000:3000
     environment:
       - SERVER_URL
     volumes:
-      - ./front:/opt/app
+      - ./front:/home/node/app
   db:
     image: postgres:13.4
     ports:
