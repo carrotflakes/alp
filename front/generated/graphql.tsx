@@ -288,6 +288,11 @@ export type WorkspaceUser = {
   workspaceId: Scalars['ID'];
 };
 
+export type MeQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MeQuery = { __typename?: 'QueryRoot', me: { __typename?: 'User', id: string, name: string, rooms: Array<{ __typename?: 'Room', id: string, code: string }>, workspaces: Array<{ __typename?: 'WorkspaceUser', id: string, role: Role, screenName: string, workspaceId: string, userId: string, status: UserStatus, workspace: { __typename?: 'Workspace', id: string, code: string, rooms: Array<{ __typename?: 'Room', id: string, code: string }>, users: Array<{ __typename?: 'WorkspaceUser', role: Role, userId: string, user: { __typename?: 'User', id: string, name: string } }> } }> } };
+
 export type AcceptInvitationMutationVariables = Exact<{
   token: Scalars['String'];
 }>;
@@ -339,6 +344,8 @@ export type UpdateUserStatusMutationVariables = Exact<{
 
 export type UpdateUserStatusMutation = { __typename?: 'MutationRoot', updateUserStatus: boolean };
 
+export type MyMessageFragment = { __typename?: 'Message', id: string, text: string, createdAt: string, user: { __typename?: 'User', name: string } };
+
 export type UsersInWorkspaceSubscriptionVariables = Exact<{
   workspaceId: Scalars['ID'];
 }>;
@@ -352,11 +359,6 @@ export type CreateWorkspaceMutationVariables = Exact<{
 
 
 export type CreateWorkspaceMutation = { __typename?: 'MutationRoot', createWorkspace: { __typename?: 'Workspace', id: string } };
-
-export type MeQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type MeQuery = { __typename?: 'QueryRoot', me: { __typename?: 'User', id: string, name: string, rooms: Array<{ __typename?: 'Room', id: string, code: string }>, workspaces: Array<{ __typename?: 'WorkspaceUser', id: string, role: Role, screenName: string, workspaceId: string, userId: string, status: UserStatus, workspace: { __typename?: 'Workspace', id: string, code: string, rooms: Array<{ __typename?: 'Room', id: string, code: string }>, users: Array<{ __typename?: 'WorkspaceUser', role: Role, userId: string, user: { __typename?: 'User', id: string, name: string } }> } }> } };
 
 export type CreateUserMutationVariables = Exact<{
   name: Scalars['String'];
@@ -389,8 +391,6 @@ export type MessageAddedSubscriptionVariables = Exact<{
 
 export type MessageAddedSubscription = { __typename?: 'SubscriptionRoot', messages: { __typename?: 'MessageChanged', message: { __typename?: 'Message', id: string, text: string, createdAt: string, user: { __typename?: 'User', name: string } } } };
 
-export type MyMessageFragment = { __typename?: 'Message', id: string, text: string, createdAt: string, user: { __typename?: 'User', name: string } };
-
 export const MyMessageFragmentDoc = gql`
     fragment MyMessage on Message {
   id
@@ -401,6 +401,69 @@ export const MyMessageFragmentDoc = gql`
   createdAt
 }
     `;
+export const MeDocument = gql`
+    query me {
+  me {
+    id
+    name
+    rooms {
+      id
+      code
+    }
+    workspaces {
+      id
+      role
+      screenName
+      workspaceId
+      userId
+      workspace {
+        id
+        code
+        rooms {
+          id
+          code
+        }
+        users {
+          role
+          userId
+          user {
+            id
+            name
+          }
+        }
+      }
+      status
+    }
+  }
+}
+    `;
+
+/**
+ * __useMeQuery__
+ *
+ * To run a query within a React component, call `useMeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMeQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useMeQuery(baseOptions?: Apollo.QueryHookOptions<MeQuery, MeQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<MeQuery, MeQueryVariables>(MeDocument, options);
+      }
+export function useMeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<MeQuery, MeQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<MeQuery, MeQueryVariables>(MeDocument, options);
+        }
+export type MeQueryHookResult = ReturnType<typeof useMeQuery>;
+export type MeLazyQueryHookResult = ReturnType<typeof useMeLazyQuery>;
+export type MeQueryResult = Apollo.QueryResult<MeQuery, MeQueryVariables>;
 export const AcceptInvitationDocument = gql`
     mutation acceptInvitation($token: String!) {
   acceptInvitation(token: $token) {
@@ -724,69 +787,6 @@ export function useCreateWorkspaceMutation(baseOptions?: Apollo.MutationHookOpti
 export type CreateWorkspaceMutationHookResult = ReturnType<typeof useCreateWorkspaceMutation>;
 export type CreateWorkspaceMutationResult = Apollo.MutationResult<CreateWorkspaceMutation>;
 export type CreateWorkspaceMutationOptions = Apollo.BaseMutationOptions<CreateWorkspaceMutation, CreateWorkspaceMutationVariables>;
-export const MeDocument = gql`
-    query me {
-  me {
-    id
-    name
-    rooms {
-      id
-      code
-    }
-    workspaces {
-      id
-      role
-      screenName
-      workspaceId
-      userId
-      workspace {
-        id
-        code
-        rooms {
-          id
-          code
-        }
-        users {
-          role
-          userId
-          user {
-            id
-            name
-          }
-        }
-      }
-      status
-    }
-  }
-}
-    `;
-
-/**
- * __useMeQuery__
- *
- * To run a query within a React component, call `useMeQuery` and pass it any options that fit your needs.
- * When your component renders, `useMeQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useMeQuery({
- *   variables: {
- *   },
- * });
- */
-export function useMeQuery(baseOptions?: Apollo.QueryHookOptions<MeQuery, MeQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<MeQuery, MeQueryVariables>(MeDocument, options);
-      }
-export function useMeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<MeQuery, MeQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<MeQuery, MeQueryVariables>(MeDocument, options);
-        }
-export type MeQueryHookResult = ReturnType<typeof useMeQuery>;
-export type MeLazyQueryHookResult = ReturnType<typeof useMeLazyQuery>;
-export type MeQueryResult = Apollo.QueryResult<MeQuery, MeQueryVariables>;
 export const CreateUserDocument = gql`
     mutation createUser($name: String!) {
   createUser(name: $name) {

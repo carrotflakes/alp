@@ -24,6 +24,7 @@
     "@graphql-cli/codegen": "2.1.5",
     "@graphql-cli/coverage": "2.1.0",
     "@graphql-cli/validate": "2.1.0",
+    "@graphql-codegen/client-preset": "^2.0.0",
     "@graphql-codegen/introspection": "2.1.0",
     "@graphql-codegen/typescript": "2.4.1",
     "@graphql-codegen/typescript-operations": "2.2.1",

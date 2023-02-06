@@ -4,6 +4,7 @@ documents:
   - context/**/*.graphql
   - hooks/**/*.graphql
   - components/**/*.graphql
+  - '**/*.tsx'
 extensions:
   codegen:
     generates:
@@ -15,4 +16,6 @@ extensions:
           - typescript
           - typescript-operations
           - typescript-react-apollo
+      gql/:
+        preset: client
     overwrite: true

@@ -1,38 +1,3 @@
-query me {
-  me {
-    id
-    name
-    rooms {
-      id
-      code
-    }
-    workspaces {
-      id
-      role
-      screenName
-      workspaceId
-      userId
-      workspace {
-        id
-        code
-        rooms {
-          id
-          code
-        }
-        users {
-          role
-          userId
-          user {
-            id
-            name
-          }
-        }
-      }
-      status
-    }
-  }
-}
-
 mutation createUser($name: String!) {
   createUser(name: $name) {
     id
