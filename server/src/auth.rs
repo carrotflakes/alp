@@ -15,11 +15,8 @@ impl Authorize {
     }
 
     pub fn varify(&self, token: &str) -> Result<Option<UID>, String> {
-        let validation = Validation {
-            algorithms: vec![Algorithm::RS256],
-            aud: Some(vec!["alp-chat-b4bce".to_string()].into_iter().collect()),
-            ..Validation::default()
-        };
+        let mut validation = Validation::new(Algorithm::RS256);
+        validation.set_audience(&["alp-chat-b4bce"]);
 
         let kid = match decode_header(token) {
             Ok(Header { kid: Some(kid), .. }) => kid,
@@ -33,7 +30,7 @@ impl Authorize {
             return Err(format!("invalid kid"));
         };
 
-        let key = DecodingKey::from_rsa_components(&jwk.n, &jwk.e);
+        let key = DecodingKey::from_rsa_components(&jwk.n, &jwk.e).unwrap();
 
         let token_data = match decode::<Claims>(&token, &key, &validation) {
             Ok(c) => c,

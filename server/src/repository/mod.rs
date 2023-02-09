@@ -54,7 +54,7 @@ impl Repository {
 
         diesel::insert_into(users::table)
             .values(&new_user)
-            .get_result(&self.get_conn()?)
+            .get_result(&mut self.get_conn()?)
             .map_err(err)
     }
 
@@ -67,7 +67,7 @@ impl Repository {
 
         diesel::insert_into(messages::table)
             .values(&new_message)
-            .get_result(&self.get_conn()?)
+            .get_result(&mut self.get_conn()?)
             .map_err(err)
     }
 
@@ -76,7 +76,7 @@ impl Repository {
 
         diesel::insert_into(rooms::table)
             .values(&new_room)
-            .get_result(&self.get_conn()?)
+            .get_result(&mut self.get_conn()?)
             .map_err(err)
     }
 
@@ -85,7 +85,7 @@ impl Repository {
 
         diesel::insert_into(user_rooms::table)
             .values(&new_user_room)
-            .execute(&self.get_conn()?)
+            .execute(&mut self.get_conn()?)
             .map_err(err)
     }
 
@@ -94,7 +94,7 @@ impl Repository {
 
         diesel::insert_into(workspaces::table)
             .values(&new_workspace)
-            .get_result(&self.get_conn()?)
+            .get_result(&mut self.get_conn()?)
             .map_err(err)
     }
 
@@ -117,7 +117,7 @@ impl Repository {
 
         diesel::insert_into(workspace_users::table)
             .values(&new_user_workspace)
-            .get_result(&self.get_conn()?)
+            .get_result(&mut self.get_conn()?)
             .map_err(err)
     }
 
@@ -133,14 +133,14 @@ impl Repository {
 
         diesel::insert_into(workspace_invitations::table)
             .values(&new_workspace_invitation)
-            .get_result(&self.get_conn()?)
+            .get_result(&mut self.get_conn()?)
             .map_err(err)
     }
 
     pub fn delete_workspace_invitation(&self, id: i32) -> Result<WorkspaceInvitation> {
         diesel::update(workspace_invitations::dsl::workspace_invitations.find(id))
             .set(workspace_invitations::dsl::deleted_at.eq(Utc::now().naive_utc()))
-            .get_result(&self.get_conn()?)
+            .get_result(&mut self.get_conn()?)
             .map_err(err)
     }
     pub fn remove_user_workspace(&self, user_id: i32, workspace_id: i32) -> Result<bool> {
@@ -151,7 +151,7 @@ impl Repository {
                     .and(workspace_users::dsl::workspace_id.eq(workspace_id)),
             ),
         )
-        .execute(&self.get_conn()?)
+        .execute(&mut self.get_conn()?)
         .map(|c| c == 1)
         .map_err(err)
     }
@@ -159,34 +159,34 @@ impl Repository {
     pub fn get_user(&self, id: i32) -> Result<User> {
         users::dsl::users
             .find(id)
-            .first::<User>(&self.get_conn()?)
+            .first::<User>(&mut self.get_conn()?)
             .map_err(err)
     }
 
     pub fn get_user_by_uid(&self, uid: &str) -> Result<User> {
         users::dsl::users
             .filter(users::dsl::uid.eq(uid))
-            .first::<User>(&self.get_conn()?)
+            .first::<User>(&mut self.get_conn()?)
             .map_err(err)
     }
 
     pub fn get_all_users(&self) -> Result<Vec<User>> {
         users::dsl::users
-            .load::<User>(&self.get_conn()?)
+            .load::<User>(&mut self.get_conn()?)
             .map_err(err)
     }
 
     pub fn count_messages(&self) -> Result<i64> {
         messages::dsl::messages
             .count()
-            .get_result(&self.get_conn()?)
+            .get_result(&mut self.get_conn()?)
             .map_err(err)
     }
 
     pub fn get_message(&self, id: i32) -> Result<Message> {
         messages::dsl::messages
             .find(id)
-            .first::<Message>(&self.get_conn()?)
+            .first::<Message>(&mut self.get_conn()?)
             .map_err(err)
     }
 
@@ -195,7 +195,7 @@ impl Repository {
             .filter(messages::dsl::room_id.eq(room_id))
             .filter(messages::dsl::id.gt(id))
             .limit(limit)
-            .get_results(&self.get_conn()?)
+            .get_results(&mut self.get_conn()?)
             .map_err(err)
     }
 
@@ -205,7 +205,7 @@ impl Repository {
             .filter(messages::dsl::id.lt(id))
             .order(messages::dsl::id.desc())
             .limit(limit)
-            .get_results(&self.get_conn()?)
+            .get_results(&mut self.get_conn()?)
             .map(|mut messages| {
                 messages.reverse();
                 messages
@@ -216,7 +216,7 @@ impl Repository {
     pub fn get_room(&self, id: i32) -> Result<Room> {
         rooms::dsl::rooms
             .find(id)
-            .first::<Room>(&self.get_conn()?)
+            .first::<Room>(&mut self.get_conn()?)
             .map_err(err)
     }
 
@@ -225,7 +225,7 @@ impl Repository {
             .filter(user_rooms::dsl::user_id.eq(user_id))
             .inner_join(rooms::dsl::rooms)
             .select(rooms::all_columns)
-            .get_results(&self.get_conn()?)
+            .get_results(&mut self.get_conn()?)
             .map_err(err)
     }
 
@@ -237,7 +237,7 @@ impl Repository {
                     .and(user_rooms::dsl::room_id.eq(room_id)),
             )
             .count()
-            .get_result(&self.get_conn()?)
+            .get_result(&mut self.get_conn()?)
             .map(|count: i64| count == 1)
             .map_err(err)
     }
@@ -245,28 +245,28 @@ impl Repository {
     pub fn get_workspace(&self, id: i32) -> Result<Workspace> {
         workspaces::dsl::workspaces
             .find(id)
-            .first::<Workspace>(&self.get_conn()?)
+            .first::<Workspace>(&mut self.get_conn()?)
             .map_err(err)
     }
 
     pub fn get_workspaces_by_user_id(&self, user_id: i32) -> Result<Vec<WorkspaceUser>> {
         workspace_users::dsl::workspace_users
             .filter(workspace_users::dsl::user_id.eq(user_id))
-            .get_results(&self.get_conn()?)
+            .get_results(&mut self.get_conn()?)
             .map_err(err)
     }
 
     pub fn get_users_by_workspace_id(&self, workspace_id: i32) -> Result<Vec<WorkspaceUser>> {
         workspace_users::dsl::workspace_users
             .filter(workspace_users::dsl::workspace_id.eq(workspace_id))
-            .get_results(&self.get_conn()?)
+            .get_results(&mut self.get_conn()?)
             .map_err(err)
     }
 
     pub fn get_rooms_by_workspace_id(&self, workspace_id: i32) -> Result<Vec<Room>> {
         rooms::dsl::rooms
             .filter(rooms::dsl::workspace_id.eq(workspace_id))
-            .get_results(&self.get_conn()?)
+            .get_results(&mut self.get_conn()?)
             .map_err(err)
     }
 
@@ -279,14 +279,14 @@ impl Repository {
                     .and(users::dsl::uid.eq(uid)),
             )
             .select(workspace_users::dsl::role)
-            .get_result(&self.get_conn()?)
+            .get_result(&mut self.get_conn()?)
             .map_err(err)
     }
 
     pub fn get_workspace_user(&self, workspace_user_id: i32) -> Result<WorkspaceUser> {
         workspace_users::dsl::workspace_users
             .find(workspace_user_id)
-            .first::<WorkspaceUser>(&self.get_conn()?)
+            .first::<WorkspaceUser>(&mut self.get_conn()?)
             .map_err(err)
     }
 
@@ -297,7 +297,7 @@ impl Repository {
                     .eq(token)
                     .and(workspace_invitations::dsl::deleted_at.is_null()),
             )
-            .get_result(&self.get_conn()?)
+            .get_result(&mut self.get_conn()?)
             .map_err(err)
     }
 
@@ -309,12 +309,12 @@ impl Repository {
         diesel::update(workspace_users::dsl::workspace_users)
             .filter(workspace_users::dsl::id.eq(workspace_user_id))
             .set(workspace_users::dsl::screen_name.eq(screen_name))
-            .execute(&self.get_conn()?)
+            .execute(&mut self.get_conn()?)
             .map(|_| ())
             .map_err(err)?;
         workspace_users::dsl::workspace_users
             .find(workspace_user_id)
-            .first::<WorkspaceUser>(&self.get_conn()?)
+            .first::<WorkspaceUser>(&mut self.get_conn()?)
             .map_err(err)
     }
 
