@@ -34,11 +34,11 @@ impl QueryRoot {
                 let (messages, has_prev, has_next) =
                     usecase.get_messages(room_id, after, before, first, last)?;
                 let mut connection = Connection::new(has_prev, has_next);
-                connection.append(messages.into_iter().map(|message| {
+                connection.edges.extend(messages.into_iter().map(|message| {
                     let message: Message = message.into();
                     Edge::with_additional_fields(message.id.to_string(), message, EmptyFields)
                 }));
-                Ok(connection)
+                Ok::<_, async_graphql::Error>(connection)
             },
         )
         .await
@@ -85,12 +85,12 @@ impl QueryRoot {
                     start = if last > end - start { end } else { end - last };
                 }
                 let mut connection = Connection::new(start > 0, end < 10000);
-                connection.append(
+                connection.edges.extend(
                     (start..end)
                         .into_iter()
                         .map(|n| Edge::with_additional_fields(n, n as i32, EmptyFields)),
                 );
-                Ok(connection)
+                Ok::<_, async_graphql::Error>(connection)
             },
         )
         .await

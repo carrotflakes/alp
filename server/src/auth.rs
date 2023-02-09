@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use actix_web::client::SendRequestError;
 use jsonwebtoken::errors::ErrorKind;
 use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
@@ -67,7 +66,7 @@ pub struct JWK {
     pub n: String,
 }
 
-pub async fn get_firebase_jwks() -> Result<HashMap<String, JWK>, SendRequestError> {
+pub async fn get_firebase_jwks() -> Result<HashMap<String, JWK>, awc::error::SendRequestError> {
     #[derive(Debug, Deserialize)]
     struct KeysResponse {
         keys: Vec<JWK>,
@@ -76,9 +75,9 @@ pub async fn get_firebase_jwks() -> Result<HashMap<String, JWK>, SendRequestErro
     let url =
         "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com";
 
-    let mut response = actix_web::client::Client::default()
+    let mut response = awc::Client::default()
         .get(url)
-        .header("User-Agent", "Actix-web")
+        .insert_header(("User-Agent", "Actix-web"))
         .send()
         .await?;
     let k: KeysResponse = response.json().await.unwrap();

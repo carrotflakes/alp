@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use actix_cors::Cors;
+use actix_web::web::Data;
 use actix_web::{guard, http, web, App, HttpRequest, HttpResponse, HttpServer, Result};
 use alp::auth::Authorize;
 use alp::db::new_pool;
@@ -9,9 +10,13 @@ use alp::schema::{self, new_schema, MySchema};
 use alp::usecases::Usecase;
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::Schema;
-use async_graphql_actix_web::{Request, Response, WSSubscription};
+use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse, GraphQLSubscription};
 
-async fn index(schema: web::Data<MySchema>, req: HttpRequest, gql_req: Request) -> Response {
+async fn index(
+    schema: web::Data<MySchema>,
+    req: HttpRequest,
+    gql_req: GraphQLRequest,
+) -> GraphQLResponse {
     let token = req
         .headers()
         .get("Authorization")
@@ -36,19 +41,21 @@ async fn index_ws(
     req: HttpRequest,
     payload: web::Payload,
 ) -> Result<HttpResponse> {
-    WSSubscription::start_with_initializer(Schema::clone(&*schema), &req, payload, |value| async {
-        #[derive(serde_derive::Deserialize)]
-        struct Payload {
-            #[serde(rename = "Authorization")]
-            authentication: String,
-        }
+    GraphQLSubscription::new(Schema::clone(&*schema))
+        .on_connection_init(|value| async {
+            #[derive(serde_derive::Deserialize)]
+            struct Payload {
+                #[serde(rename = "Authorization")]
+                authentication: String,
+            }
 
-        let mut data = async_graphql::Data::default();
-        if let Ok(payload) = serde_json::from_value::<Payload>(value) {
-            data.insert(schema::MyToken(payload.authentication));
-        }
-        Ok(data)
-    })
+            let mut data = async_graphql::Data::default();
+            if let Ok(payload) = serde_json::from_value::<Payload>(value) {
+                data.insert(schema::MyToken(payload.authentication));
+            }
+            Ok(data)
+        })
+        .start(&req, payload)
 }
 
 #[actix_web::main]
@@ -87,7 +94,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .data(schema.clone())
+            .app_data(Data::new(schema.clone()))
             .wrap(new_cors())
             .service(web::resource("/").guard(guard::Post()).to(index))
             .service(

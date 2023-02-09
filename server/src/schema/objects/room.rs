@@ -1,5 +1,4 @@
-
-use super::{Storage, message::Message};
+use super::{message::Message, Storage};
 use async_graphql::{
     connection::{Connection, Edge, EmptyFields},
     ComplexObject, Context, Result, SimpleObject, ID,
@@ -38,11 +37,11 @@ impl Room {
                 let (messages, has_prev, has_next) =
                     usecase.get_messages(room_id, after, before, first, last)?;
                 let mut connection = Connection::new(has_prev, has_next);
-                connection.append(messages.into_iter().map(|message| {
+                connection.edges.extend(messages.into_iter().map(|message| {
                     let message: Message = message.into();
                     Edge::with_additional_fields(message.id.to_string(), message, EmptyFields)
                 }));
-                Ok(connection)
+                Ok::<_, async_graphql::Error>(connection)
             },
         )
         .await
