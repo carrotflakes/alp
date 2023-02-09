@@ -4,10 +4,12 @@ use actix_cors::Cors;
 use actix_web::web::Data;
 use actix_web::{guard, http, web, App, HttpRequest, HttpResponse, HttpServer, Result};
 use alp::auth::Authorize;
+use alp::dataloader::UserLoader;
 use alp::db::new_pool;
 use alp::repository::Repository;
 use alp::schema::{self, new_schema, MySchema};
 use alp::usecases::Usecase;
+use async_graphql::dataloader::DataLoader;
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::Schema;
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse, GraphQLSubscription};
@@ -87,8 +89,9 @@ async fn main() -> std::io::Result<()> {
     // use redis::Commands;
     // redis_client.get_connection().unwrap().publish::<_, _, ()>("foo", "hey").unwrap();
 
-    let usecase = Usecase::new(auth, repository);
-    let schema = new_schema(usecase);
+    let usecase = Usecase::new(auth, repository.clone());
+    let user_dataloader = DataLoader::new(UserLoader::new(repository.clone()), actix_web::rt::spawn);
+    let schema = new_schema(usecase, user_dataloader);
 
     println!("Playground: http://localhost:8000");
 

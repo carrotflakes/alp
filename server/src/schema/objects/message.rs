@@ -24,8 +24,8 @@ impl Message {
     }
 
     async fn user(&self, ctx: &Context<'_>) -> Result<User> {
-        let usecase = &ctx.data_unchecked::<Storage>().usecase;
-        res(usecase.get_user(self.user_id))
+        let dl = &ctx.data_unchecked::<Storage>().user_dataloader;
+        res(Ok(dl.load_one(self.user_id as i32).await.unwrap().unwrap()))
     }
 
     async fn room(&self, ctx: &Context<'_>) -> Result<Room> {

@@ -2,6 +2,7 @@
 extern crate diesel;
 
 pub mod auth;
+pub mod dataloader;
 pub mod db;
 mod domain;
 pub mod repository;

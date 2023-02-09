@@ -7,12 +7,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-async-graphql = "5.0"
+async-graphql = { version = "5.0", features = ["dataloader"] }
 async-graphql-actix-web = "5.0"
 actix-web = { version = "4.3", features=["rustls"] }
 actix-web-actors = "4.2"
 awc = { version = "3.1", features=["rustls"] }
 rustls = "0.20"
+async-trait = "0"
 
 slab = "0.4.2"
 futures = "0.3.0"

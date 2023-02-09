@@ -163,6 +163,13 @@ impl Repository {
             .map_err(err)
     }
 
+    pub fn get_users(&self, ids: &[i32]) -> Result<Vec<User>> {
+        users::dsl::users
+            .filter(users::dsl::id.eq_any(ids))
+            .get_results::<User>(&mut self.get_conn()?)
+            .map_err(err)
+    }
+
     pub fn get_user_by_uid(&self, uid: &str) -> Result<User> {
         users::dsl::users
             .filter(users::dsl::uid.eq(uid))

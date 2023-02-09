@@ -40,10 +40,10 @@ impl WorkspaceUser {
     }
 
     async fn user(&self, ctx: &Context<'_>) -> Result<User> {
-        let usecase = &ctx.data_unchecked::<Storage>().usecase;
-        usecase
-            .get_user(self.user_id)
-            .map(User::from)
+        let dl = &ctx.data_unchecked::<Storage>().user_dataloader;
+        dl.load_one(self.user_id as i32)
+            .await
+            .map(|x| User::from(x.unwrap()))
             .map_err(|x| x.into())
     }
 
