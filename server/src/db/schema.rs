@@ -1,4 +1,6 @@
-table! {
+// @generated automatically by Diesel CLI.
+
+diesel::table! {
     messages (id) {
         id -> Int4,
         user_id -> Int4,
@@ -8,7 +10,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     rooms (id) {
         id -> Int4,
         code -> Varchar,
@@ -17,7 +19,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     user_rooms (id) {
         id -> Int4,
         user_id -> Int4,
@@ -25,7 +27,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     users (id) {
         id -> Int4,
         uid -> Varchar,
@@ -33,7 +35,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     workspace_invitations (id) {
         id -> Int4,
         workspace_id -> Int4,
@@ -43,7 +45,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     workspace_users (id) {
         id -> Int4,
         workspace_id -> Int4,
@@ -53,7 +55,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     workspaces (id) {
         id -> Int4,
         code -> Varchar,
@@ -61,16 +63,16 @@ table! {
     }
 }
 
-joinable!(messages -> rooms (room_id));
-joinable!(messages -> users (user_id));
-joinable!(rooms -> workspaces (workspace_id));
-joinable!(user_rooms -> rooms (room_id));
-joinable!(user_rooms -> users (user_id));
-joinable!(workspace_invitations -> workspaces (workspace_id));
-joinable!(workspace_users -> users (user_id));
-joinable!(workspace_users -> workspaces (workspace_id));
+diesel::joinable!(messages -> rooms (room_id));
+diesel::joinable!(messages -> users (user_id));
+diesel::joinable!(rooms -> workspaces (workspace_id));
+diesel::joinable!(user_rooms -> rooms (room_id));
+diesel::joinable!(user_rooms -> users (user_id));
+diesel::joinable!(workspace_invitations -> workspaces (workspace_id));
+diesel::joinable!(workspace_users -> users (user_id));
+diesel::joinable!(workspace_users -> workspaces (workspace_id));
 
-allow_tables_to_appear_in_same_query!(
+diesel::allow_tables_to_appear_in_same_query!(
     messages,
     rooms,
     user_rooms,

@@ -12,3 +12,5 @@ CREATE TABLE workspace_users (
   role VARCHAR NOT NULL,
   UNIQUE (workspace_id, user_id)
 );
+
+INSERT INTO workspaces (code) VALUES ('default');

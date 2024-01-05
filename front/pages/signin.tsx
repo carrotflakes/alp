@@ -1,9 +1,10 @@
-import firebase from 'firebase'
 import Router from 'next/router'
 import Head from 'next/head'
 import { useContext, useEffect } from 'react'
 import { AuthContext } from '../context/auth'
 import styles from '../styles/Home.module.css'
+import { GoogleAuthProvider, signInWithRedirect } from 'firebase/auth'
+import { auth } from '../utils/firebase'
 
 export default function Signin() {
   const { currentUser } = useContext(AuthContext)
@@ -13,8 +14,8 @@ export default function Signin() {
   }, [currentUser])
 
   const login = () => {
-    const provider = new firebase.auth.GoogleAuthProvider()
-    firebase.auth().signInWithRedirect(provider)
+    const provider = new GoogleAuthProvider()
+    signInWithRedirect(auth, provider)
   }
   return (
     <div className={styles.container}>

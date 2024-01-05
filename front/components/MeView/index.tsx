@@ -52,8 +52,8 @@ mutation acceptInvitation($token: String!) {
 }
 `)
 
-export const MeView: VFC<{ className?: string }> = ({ className = "" }) => {
-  const meRes = useQuery(meQueryDoc, {})
+export function MeView({ className = "" }: { className?: string; }) {
+  const meRes = useQuery(meQueryDoc, {});
   const [invitationToken, setInvitationToken] = useState("");
   const [accept] = useMutation(acceptInvitationMutDoc);
   const [workspaceCode, setWorkspaceCode] = useState("");
@@ -61,22 +61,21 @@ export const MeView: VFC<{ className?: string }> = ({ className = "" }) => {
 
   return (
     <div className={className + " p-2"}>
-      {meRes.data?.me.name}
+      <span>
+        name: {meRes.data?.me.name}
+      </span>
       <div>
         <input
           type="text"
           value={invitationToken}
-          onChange={(e) => setInvitationToken(e.target.value)}
-        />
+          onChange={(e) => setInvitationToken(e.target.value)} />
         <button
-          onClick={() =>
-            accept({
-              variables: { token: invitationToken },
-              onCompleted(e) {
-                console.log(e);
-              },
-            })
-          }
+          onClick={() => accept({
+            variables: { token: invitationToken },
+            onCompleted(e) {
+              console.log(e);
+            },
+          })}
         >
           verify
         </button>
@@ -85,21 +84,18 @@ export const MeView: VFC<{ className?: string }> = ({ className = "" }) => {
         <input
           type="text"
           value={workspaceCode}
-          onChange={(e) => setWorkspaceCode(e.target.value)}
-        />
+          onChange={(e) => setWorkspaceCode(e.target.value)} />
         <button
-          onClick={() =>
-            createWorkspace({
-              variables: { code: workspaceCode },
-              onCompleted(e) {
-                console.log(e);
-              },
-            })
-          }
+          onClick={() => createWorkspace({
+            variables: { code: workspaceCode },
+            onCompleted(e) {
+              console.log(e);
+            },
+          })}
         >
           create workspace
         </button>
       </div>
     </div>
   );
-};
+}
