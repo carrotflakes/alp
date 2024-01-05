@@ -11,29 +11,30 @@
     "graphql:validate": "graphql validate"
   },
   "dependencies": {
-    "@apollo/client": "^3.4.11",
-    "classnames": "^2.3.1",
-    "firebase": "^8.0.0",
-    "graphql": "^15.0.0",
-    "next": "12.0.9",
-    "react": "17.0.2",
-    "react-dom": "17.0.2",
+    "@apollo/client": "^3.8.8",
+    "classnames": "^2.5.1",
+    "firebase": "^10.7.1",
+    "graphql": "^16.8.1",
+    "next": "14.0.4",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
     "subscriptions-transport-ws": "^0.11.0"
   },
   "devDependencies": {
-    "@graphql-cli/codegen": "2.1.5",
+    "@graphql-cli/codegen": "3.0.4",
     "@graphql-cli/coverage": "2.1.0",
     "@graphql-cli/validate": "2.1.0",
-    "@graphql-codegen/client-preset": "^2.0.0",
-    "@graphql-codegen/introspection": "2.1.0",
-    "@graphql-codegen/typescript": "2.4.1",
-    "@graphql-codegen/typescript-operations": "2.2.1",
-    "@graphql-codegen/typescript-react-apollo": "3.2.2",
-    "@types/react": "^17.0.9",
-    "autoprefixer": "^10.2.6",
+    "@graphql-codegen/client-preset": "^4.1.0",
+    "@graphql-codegen/introspection": "4.0.0",
+    "@graphql-codegen/typescript": "4.0.1",
+    "@graphql-codegen/typescript-operations": "4.0.1",
+    "@graphql-codegen/typescript-react-apollo": "4.1.0",
+    "@types/firebase": "^3.2.1",
+    "@types/react": "^18.2.46",
+    "autoprefixer": "^10.4.16",
     "graphql-cli": "4.1.0",
-    "postcss": "^8.3.2",
-    "tailwindcss": "^2.1.4",
-    "typescript": "^4.3.2"
+    "postcss": "^8.4.33",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.3.3"
   }
 }

@@ -16,7 +16,7 @@ services:
       - db
       - redis
   front:
-    image: "node:15"
+    image: "node:20"
     working_dir: /home/node/app
     command: bash -c "yarn && yarn dev"
     ports:
@@ -25,6 +25,7 @@ services:
       - SERVER_URL
     volumes:
       - ./front:/home/node/app
+      - /home/node/app/node_modules
   db:
     image: postgres:13.4
     ports:

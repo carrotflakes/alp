@@ -32,6 +32,7 @@ Then open localhost:3000 in your browser.
 
 ``` sh
 $ cargo install diesel_cli --no-default-features --features postgres
+$ diesel migration run
 $ diesel migration generate <migration_name>
 ```
 

@@ -1,14 +1,14 @@
-import firebase from "firebase";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useContext, useEffect, VFC } from "react";
+import { useContext, useEffect } from "react";
 import { AuthContext } from "../../context/auth";
 import { useCreateUserMutation, useMeQuery } from "../../generated/graphql";
 import { WorkspaceSelector } from "./WorkspaceSelector";
 
 import cn from "classnames";
+import { auth } from "../../utils/firebase";
 
-export const Header: VFC<{ className?: string }> = ({ className = "" }) => {
+export const Header = ({ className = "" }: { className?: string }) => {
   const { currentUser } = useContext(AuthContext);
   const router = useRouter();
 
@@ -39,7 +39,7 @@ export const Header: VFC<{ className?: string }> = ({ className = "" }) => {
           </div>
           <div
             className="ml-6 cursor-pointer"
-            onClick={() => firebase.auth().signOut()}
+            onClick={() => auth.signOut()}
           >
             sign out
           </div>

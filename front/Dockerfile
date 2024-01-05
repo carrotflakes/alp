@@ -1,11 +1,11 @@
-FROM node:15-slim AS deps
+FROM node:20-slim AS deps
 
 WORKDIR /opt/app
 COPY package.json package-lock.json ./
 RUN npm ci
 
 # ===
-FROM node:15-slim AS builder
+FROM node:20-slim AS builder
 
 WORKDIR /opt/app
 COPY . .
@@ -13,7 +13,7 @@ COPY --from=deps /opt/app/node_modules ./node_modules
 RUN npm run build
 
 # ===
-FROM node:15-slim
+FROM node:20-slim
 
 WORKDIR /opt/app
 ENV NODE_ENV=production
