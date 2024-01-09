@@ -3,6 +3,7 @@
 import { useReactiveVar } from "@apollo/client";
 import { useCallback, useEffect, useState, VFC } from "react";
 import {
+  useCreateRoomMutation,
   useInviteMutation,
   useLeaveFromWorkspaceMutation,
   useUpdateUserProfileMutation,
@@ -23,7 +24,10 @@ export const WorkspaceDetail = ({
   const { data } = useWorkspaceQuery({ variables: { id: workspaceId } });
   const [inviteMut] = useInviteMutation();
   const [leaveMut] = useLeaveFromWorkspaceMutation();
+  const [createRoomMut] = useCreateRoomMutation();
   useSubscribeUsersInWorkspace(workspaceId);
+
+  const [roomName, setRoomName] = useState("");
 
   const [screenName, setScreenName] = useState("");
 
@@ -99,6 +103,23 @@ export const WorkspaceDetail = ({
         }}
       >
         leave
+      </button>
+      <br />
+      <input
+        type="text"
+        value={roomName}
+        onChange={(e) => setRoomName(e.target.value)}
+      />
+      <button
+        onClick={() => {
+          createRoomMut({
+            variables: { workspaceId, code: roomName },
+            onCompleted(data) {
+              console.log("created");
+            },
+          });
+        }}>
+        create room
       </button>
     </div>
   );

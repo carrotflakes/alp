@@ -34,3 +34,9 @@ mutation updateUserProfile($workspaceUserId: ID!, $screenName: String!) {
     id
   }
 }
+
+mutation createRoom($workspaceId: ID!, $code: String!) {
+  createRoom(workspaceId: $workspaceId, code: $code) {
+    id
+  }
+}
