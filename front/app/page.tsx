@@ -1,3 +1,5 @@
+"use client";
+
 import { useReactiveVar } from "@apollo/client";
 import Head from "next/head";
 import { currentRoomVar, currentWorkspaceVar } from "../vars";

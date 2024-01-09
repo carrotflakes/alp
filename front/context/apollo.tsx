@@ -1,10 +1,12 @@
-import { FC, useContext, useEffect, useState } from "react";
+"use client";
+
+import React, { useContext, useEffect, useState } from "react";
 import { ApolloProvider } from "@apollo/client/react";
 import { createClient, createLink } from "../utils/apollo";
 import { AuthContext } from "./auth";
 import { loggedInVar } from "../vars";
 
-export const MyApolloProvider: FC = ({ children }) => {
+export const MyApolloProvider = ({ children }: { children: React.ReactNode }) => {
   const { currentUser } = useContext(AuthContext);
   const [client, setClient] = useState(() => createClient());
 

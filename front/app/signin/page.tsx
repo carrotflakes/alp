@@ -1,16 +1,19 @@
-import Router from 'next/router'
+"use client";
+
 import Head from 'next/head'
 import { useContext, useEffect } from 'react'
-import { AuthContext } from '../context/auth'
-import styles from '../styles/Home.module.css'
+import { AuthContext } from '../../context/auth'
+import styles from './index.module.css'
 import { GoogleAuthProvider, signInWithRedirect } from 'firebase/auth'
-import { auth } from '../utils/firebase'
+import { auth } from '../../utils/firebase'
+import { useRouter } from 'next/navigation';
 
 export default function Signin() {
+  const router = useRouter()
   const { currentUser } = useContext(AuthContext)
 
   useEffect(() => {
-    currentUser && Router.push('/')
+    currentUser && router.push('/')
   }, [currentUser])
 
   const login = () => {

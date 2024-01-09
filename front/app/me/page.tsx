@@ -1,7 +1,7 @@
 import Head from "next/head";
 import React from "react";
-import { Header } from "../components/Header";
-import { MeView } from "../components/MeView";
+import { Header } from "../../components/Header";
+import { MeView } from "../../components/MeView";
 
 export default function Me() {
   return (

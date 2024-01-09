@@ -1,5 +1,7 @@
+"use client";
+
 import { useMutation, useQuery } from "@apollo/client";
-import { useState, VFC } from "react";
+import { useState } from "react";
 import {
   useCreateWorkspaceMutation,
 } from "../../generated/graphql";

@@ -1,5 +1,6 @@
+"use client";
+
 import Link from "next/link";
-import { useRouter } from "next/router";
 import { useContext, useEffect } from "react";
 import { AuthContext } from "../../context/auth";
 import { useCreateUserMutation, useMeQuery } from "../../generated/graphql";
@@ -7,6 +8,7 @@ import { WorkspaceSelector } from "./WorkspaceSelector";
 
 import cn from "classnames";
 import { auth } from "../../utils/firebase";
+import { useRouter } from "next/navigation";
 
 export const Header = ({ className = "" }: { className?: string }) => {
   const { currentUser } = useContext(AuthContext);

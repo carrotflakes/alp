@@ -1,3 +1,5 @@
+"use client";
+
 import { useReactiveVar } from "@apollo/client";
 import { useCallback, useEffect, useState, VFC } from "react";
 import {
@@ -14,10 +16,10 @@ type props = {
   workspaceId: string;
 };
 
-export const WorkspaceDetail: VFC<props> = ({
+export const WorkspaceDetail = ({
   className = "",
   workspaceId,
-}) => {
+}: props) => {
   const { data } = useWorkspaceQuery({ variables: { id: workspaceId } });
   const [inviteMut] = useInviteMutation();
   const [leaveMut] = useLeaveFromWorkspaceMutation();

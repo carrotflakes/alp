@@ -1,9 +1,11 @@
+"use client";
+
 import { useReactiveVar } from "@apollo/client";
-import { FC, useCallback, useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { UserStatus, useUpdateUserStatusMutation } from "../generated/graphql";
 import { currentWorkspaceVar, loggedInVar } from "../vars";
 
-export const StatusManageProvider: FC = ({ children }) => {
+export const StatusManageProvider = ({ children }: { children: React.ReactNode }) => {
   const [updateUserStatus] = useUpdateUserStatusMutation();
   const loggedIn = useReactiveVar(loggedInVar);
   const workspaceUser = useReactiveVar(currentWorkspaceVar);

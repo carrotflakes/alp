@@ -1,3 +1,5 @@
+"use client";
+
 import { VFC, useCallback, useRef, useState, useEffect } from "react";
 import "tailwindcss/tailwind.css";
 import { MyMessageFragment } from "../../generated/graphql";
@@ -9,7 +11,7 @@ type props = {
   roomId: string;
 };
 
-export const ChatView: VFC<props> = ({ className = "", roomId }) => {
+export const ChatView = ({ className = "", roomId }: props) => {
   const mes = useMessages(roomId);
   const postMessage = usePostMessage();
   const [inputText, setInputText] = useState("");
@@ -44,7 +46,7 @@ export const ChatView: VFC<props> = ({ className = "", roomId }) => {
       () =>
         containerRef.current &&
         containerRef.current.clientHeight ===
-          containerRef.current.scrollHeight &&
+        containerRef.current.scrollHeight &&
         mes.fetchOlder(),
       100
     );
@@ -90,11 +92,11 @@ export const ChatView: VFC<props> = ({ className = "", roomId }) => {
   );
 };
 
-const Message: VFC<{
+const Message = ({ message, scrollTo, ref_ }: {
   message: MyMessageFragment;
   scrollTo: boolean;
   ref_?: (el: HTMLElement) => void;
-}> = ({ message, scrollTo, ref_ }) => {
+}) => {
   const a = useCallback(
     (e: HTMLDivElement) => {
       scrollTo &&
