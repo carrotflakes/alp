@@ -1,19 +1,20 @@
 "use client";
 
-import Head from 'next/head'
-import { useContext, useEffect } from 'react'
-import { AuthContext } from '../../context/auth'
-import styles from './index.module.css'
-import { GoogleAuthProvider, signInWithRedirect } from 'firebase/auth'
-import { auth } from '../../utils/firebase'
+import { GoogleAuthProvider, signInWithRedirect } from 'firebase/auth';
+import Head from 'next/head';
 import { useRouter } from 'next/navigation';
+import { useContext, useEffect } from 'react';
+import { AuthContext } from '../../context/auth';
+import { auth } from '../../utils/firebase';
+import styles from './index.module.css';
 
 export default function Signin() {
   const router = useRouter()
   const { currentUser } = useContext(AuthContext)
 
   useEffect(() => {
-    currentUser && router.push('/')
+    if (!currentUser) return
+    router.push('/create-user')
   }, [currentUser])
 
   const login = () => {

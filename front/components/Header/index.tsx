@@ -14,19 +14,6 @@ export const Header = ({ className = "" }: { className?: string }) => {
   const { currentUser } = useContext(AuthContext);
   const router = useRouter();
 
-  const meRes = useMeQuery();
-  const [createUser] = useCreateUserMutation({
-    onCompleted: () => {
-      meRes.refetch();
-    },
-  });
-
-  useEffect(() => {
-    if (currentUser && meRes.error?.message === "user not found") {
-      createUser({ variables: { name: currentUser.email || "NONAME" } });
-    }
-  }, [currentUser, meRes]);
-
   return (
     <div className={cn("p-2 flex select-none", className)}>
       {currentUser ? (
